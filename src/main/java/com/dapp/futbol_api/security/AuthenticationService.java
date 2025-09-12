@@ -3,6 +3,8 @@ package com.dapp.futbol_api.security;
 import com.dapp.futbol_api.model.Role;
 import com.dapp.futbol_api.model.User;
 import com.dapp.futbol_api.repositories.UserRepository;
+import com.dapp.futbol_api.utils.UserValidator;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,8 +19,12 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final UserValidator userValidator;
 
     public String register(RegisterRequest request) {
+        // Delegamos la validación al UserValidator
+        userValidator.validateRegistrationRequest(request);
+
         var user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
