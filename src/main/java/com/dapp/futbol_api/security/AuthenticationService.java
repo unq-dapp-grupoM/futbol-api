@@ -35,6 +35,9 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        // Delegamos la validación de formato al UserValidator
+        userValidator.validateAuthenticationRequest(request);
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         // Si llega aquí, el usuario está autenticado

@@ -1,6 +1,7 @@
 package com.dapp.futbol_api.utils;
 
 import com.dapp.futbol_api.repositories.UserRepository;
+import com.dapp.futbol_api.security.AuthenticationRequest;
 import com.dapp.futbol_api.security.RegisterRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,21 +18,60 @@ public class UserValidator {
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
     // Expresión regular para la contraseña: al menos 6 caracteres y un número.
     private static final String PASSWORD_REGEX = "^(?=.*[0-9]).{6,}$";
+    private static final int MAX_PASSWORD_LENGTH = 128;
 
 
     public void validateRegistrationRequest(RegisterRequest request) {
-        // 1. Validación del formato del email
-        if (request.getEmail() == null || !Pattern.matches(EMAIL_REGEX, request.getEmail())) {
-            throw new IllegalArgumentException("The provided email format is not valid.");
-        }
+        // Normalizamos el email antes de validar
+        request.setEmail(normalizeEmail(request.getEmail()));
 
-        // 2. Verificación de que el email no esté ya en uso
+        // Validación del formato del email
+        validateEmailFormat(request.getEmail());
+
+        // Verificación de que el email no esté ya en uso
         if (repository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("The email is already registered.");
         }
 
-        // 3. Validación de la contraseña
-        if (request.getPassword() == null || !Pattern.matches(PASSWORD_REGEX, request.getPassword())) {
+        // Validación del formato de la contraseña
+        validatePasswordFormat(request.getPassword());
+    }
+
+    public void validateAuthenticationRequest(AuthenticationRequest request) {
+        // Normalizamos el email antes de validar
+        request.setEmail(normalizeEmail(request.getEmail()));
+
+        // Validación del formato del email
+        validateEmailFormat(request.getEmail());
+        
+        // Validación del formato de la contraseña
+        validatePasswordFormat(request.getPassword());
+
+        // Verificación de que el usuario exista
+        if (repository.findByEmail(request.getEmail()).isEmpty()) {
+            throw new IllegalArgumentException("User with the provided email is not registered.");
+        }
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase();
+    }
+
+    private void validateEmailFormat(String email) {
+        if (email == null || !Pattern.matches(EMAIL_REGEX, email)) {
+            throw new IllegalArgumentException("The provided email format is not valid.");
+        }
+    }
+
+    private void validatePasswordFormat(String password) {
+        if (password != null && password.length() > MAX_PASSWORD_LENGTH) {
+            throw new IllegalArgumentException("Password cannot exceed " + MAX_PASSWORD_LENGTH + " characters.");
+        }
+
+        if (password == null || !Pattern.matches(PASSWORD_REGEX, password)) {
             throw new IllegalArgumentException("Password must be at least 6 characters long and contain at least one number.");
         }
     }
