@@ -27,7 +27,7 @@ public class PlayerController {
   @Operation(summary = "Buscar y obtener información de un jugador por nombre", description = "Busca un jugador por su nombre en WhoScored y extrae sus detalles. ¡REQUIERE AUTENTICACIÓN!")
   @GetMapping("/playerName")
   public ResponseEntity<?> getPlayerInfoByName(
-      @Parameter(description = "Nombre del jugador a buscar.", example = "Lionel Messi") @RequestParam String playerName) {
+      @Parameter(description = "Nombre del jugador a buscar.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
     try {
       PlayerDTO player = playerService.getPlayerInfoByName(playerName);
       return ResponseEntity.ok(player);

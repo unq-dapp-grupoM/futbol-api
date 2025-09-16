@@ -17,4 +17,5 @@ public class GameMatchDTO {
     private String actualTeam;
     private String rivalTeam;
     private String score;
+    private String result;
 }

@@ -27,7 +27,7 @@ public class TeamController {
     @Operation(summary = "Buscar y obtener partidos jugados", description = "Busca un historial de partidos jugados por el equipo. ¡REQUIERE AUTENTICACIÓN!")
     @GetMapping("/teamName")
     public ResponseEntity<?> getTeamInfoByName(
-            @Parameter(description = "Nombre del equipo a buscar.", example = "Real Madrid") @RequestParam String teamName) {
+            @Parameter(description = "Nombre del equipo a buscar.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
         try {
             TeamDTO team = teamService.getTeamInfoByName(teamName);
             return ResponseEntity.ok(team);

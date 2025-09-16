@@ -81,7 +81,7 @@ public class TeamService {
         }
     }
 
-    private TeamDTO scrapeTeamData(WebDriver driver) {
+    public TeamDTO scrapeTeamData(WebDriver driver) {
         TeamDTO teamDTO = new TeamDTO();
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
@@ -105,8 +105,17 @@ public class TeamService {
         for (WebElement matchRow : matchRows) {
             GameMatchDTO fixture = new GameMatchDTO();
             fixture.setCup(extractText(matchRow, By.cssSelector("a.tournament-link")));
-            fixture.setDate(extractText(matchRow, By.cssSelector("div.date")));
+            fixture.setDate(extractDate(matchRow));
             fixture.setScore(extractText(matchRow, By.cssSelector("div.result a")));
+
+            fixture.setResult("Pendiente");
+            if (!matchRow.findElements(By.cssSelector("a.box.w")).isEmpty()) {
+                fixture.setResult("Ganado");
+            } else if (!matchRow.findElements(By.cssSelector("a.box.l")).isEmpty()) {
+                fixture.setResult("Perdido");
+            } else if (!matchRow.findElements(By.cssSelector("a.box.d")).isEmpty()) {
+                fixture.setResult("Empate");
+            }
 
             String homeTeam = extractText(matchRow, By.cssSelector("div.team.home a.team-link"));
             String awayTeam = extractText(matchRow, By.cssSelector("div.team.away a.team-link"));
@@ -131,6 +140,18 @@ public class TeamService {
         return teamDTO;
     }
 
+    private String extractDate(WebElement matchRow) {
+        List<WebElement> dateElements = matchRow.findElements(By.cssSelector("div.date"));
+        for (WebElement dateElement : dateElements) {
+            String dateText = dateElement.getText();
+            if (dateText != null && !dateText.trim().isEmpty()) {
+                return dateText;
+            }
+        }
+        log.warn("No se pudo encontrar la fecha para una fila de partido.");
+        return "No encontrado";
+    }
+
     private String extractText(SearchContext context, By locator) {
         try {
             return context.findElement(locator).getText();
@@ -144,7 +165,7 @@ public class TeamService {
         try {
             return matchRow.findElement(By.cssSelector(teamSelector + " span.rcard")).getText();
         } catch (Exception e) {
-            return "";
+            return "0";
         }
     }
 }

@@ -70,45 +70,34 @@ public class PlayerService {
         }
     }
 
-    private PlayerDTO scrapePlayerData(WebElement headerContainer) {
+    public PlayerDTO scrapePlayerData(WebElement headerContainer) {
         PlayerDTO jugador = new PlayerDTO();
 
         // El contexto de búsqueda principal será el div 'header'
         jugador.setNombre(extractText(headerContainer, By.xpath(".//h1[@class='header-name']")));
 
-        // El resto de la información está en un sub-contenedor
+        // El resto de la información está en un sub-contenedor.
         WebElement infoContainer = headerContainer.findElement(By.xpath(".//div[contains(@class, 'col12-lg-10')]"));
 
-        // Equipo Actual
+        // Equipo Actual (es un enlace, caso especial)
         jugador.setEquipoActual(
                 extractText(infoContainer, By.xpath(".//span[contains(text(),'Equipo Actual')]/following-sibling::a")));
 
         // Número de Dorsal
-        String dorsalText = extractText(infoContainer,
-                By.xpath(".//span[contains(text(),'Número de Dorsal')]/parent::div"));
-        if (!dorsalText.equals("No encontrado")) {
-            jugador.setNumeroDorsal(dorsalText.replace("Número de Dorsal:", "").trim());
-        } else {
-            jugador.setNumeroDorsal(dorsalText);
-        }
+        jugador.setNumeroDorsal(extractValueFromInfoDiv(infoContainer, "Número de Dorsal"));
 
         // Edad
-        String ageText = extractText(infoContainer, By.xpath(".//span[contains(text(),'Edad')]/parent::div"));
+        String ageText = extractValueFromInfoDiv(infoContainer, "Edad");
         if (!ageText.equals("No encontrado")) {
-            jugador.setEdad(ageText.replace("Edad:", "").trim().split(" ")[0]);
+            jugador.setEdad(ageText.split(" ")[0]); // Tomamos solo el número de la edad
         } else {
             jugador.setEdad(ageText);
         }
 
         // Altura
-        String alturaText = extractText(infoContainer, By.xpath(".//span[contains(text(),'Altura')]/parent::div"));
-        if (!alturaText.equals("No encontrado")) {
-            jugador.setAltura(alturaText.replace("Altura:", "").trim());
-        } else {
-            jugador.setAltura(alturaText);
-        }
+        jugador.setAltura(extractValueFromInfoDiv(infoContainer, "Altura"));
 
-        // Nacionalidad
+        // Nacionalidad (es un span separado, caso especial)
         jugador.setNacionalidad(extractText(infoContainer,
                 By.xpath(".//span[contains(text(),'Nacionalidad')]/following-sibling::span")));
 
@@ -129,5 +118,22 @@ public class PlayerService {
             log.warn("No se pudo encontrar el elemento con el localizador: {}", locator);
             return "No encontrado";
         }
+    }
+
+    /**
+     * Extrae el valor de un div de información que sigue el patrón "Etiqueta:
+     * Valor".
+     * 
+     * @param infoContainer El WebElement que contiene los divs de información.
+     * @param label         La etiqueta de texto a buscar (ej. "Altura").
+     * @return El valor extraído como String, o "No encontrado".
+     */
+    private String extractValueFromInfoDiv(WebElement infoContainer, String label) {
+        String fullText = extractText(infoContainer, By.xpath(".//span[contains(text(),'" + label + "')]/parent::div"));
+        if (!fullText.equals("No encontrado")) {
+            // Reemplaza la etiqueta y los dos puntos para quedarse solo con el valor.
+            return fullText.replace(label + ":", "").trim();
+        }
+        return fullText;
     }
 }
