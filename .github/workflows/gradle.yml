@@ -3,16 +3,16 @@ name: Java CI with Gradle
 
 # Define los eventos que dispararán este flujo de trabajo.
 on:
-  # Se ejecuta cuando se hace un push a la rama 'dev'.
+  # Se ejecuta cuando se hace un push a la rama 'main' y la rama 'dev'.
   push:
-    branches: [ "main" ]
-  # Se ejecuta cuando se crea o actualiza un Pull Request que apunta a 'main'.
+    branches: [ "main", "dev" ]
+  # Se ejecuta cuando se crea o actualiza un Pull Request que apunta a 'main' y 'dev'.
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
 
-# Define los trabajos (jobs) que se ejecutarán. En este caso, solo uno: 'main'.
+# Define los trabajos (jobs) que se ejecutarán.
 jobs:
-  build:
+  build-and-test:
     # El tipo de máquina virtual en la que se ejecutará el trabajo. 'ubuntu-latest' es una opción estándar.
     runs-on: ubuntu-latest
 
@@ -29,6 +29,10 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      # 3. Ejecuta el comando de compilación y pruebas de Gradle usando el wrapper.
-      - name: Build with Gradle
+      # 3. Agrega los permisos necesarios para el build.
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # 4. Ejecuta el comando de compilación y pruebas de Gradle usando el wrapper.
+      - name: Build with Gradle and run unit tests
         run: ./gradlew build
