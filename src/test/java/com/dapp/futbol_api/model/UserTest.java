@@ -56,8 +56,8 @@ public class UserTest {
     void testUserDetailsMethodsShouldReturnTrue() {
         User user = new User();
 
-        // Estos métodos no están sobreescritos, por lo que usan la implementación
-        // por defecto de la interfaz UserDetails, que devuelve true.
+        // These methods are not overridden, so they use the default implementation
+        // from the UserDetails interface, which returns true.
         assertTrue(user.isAccountNonExpired(), "Account should be non-expired by default");
         assertTrue(user.isAccountNonLocked(), "Account should be non-locked by default");
         assertTrue(user.isCredentialsNonExpired(), "Credentials should be non-expired by default");
@@ -70,7 +70,7 @@ public class UserTest {
         Integer id = 10;
         String email = "setter@test.com";
         String password = "setterPassword";
-        Role role = Role.ADMIN; // Asumimos que el rol ADMIN existe para un test más completo.
+        Role role = Role.ADMIN; // We assume the ADMIN role exists for a more complete test.
 
         user.setId(id);
         user.setEmail(email);
@@ -100,7 +100,7 @@ public class UserTest {
 
     @Test
     void testEqualsAndHashCodeShouldBehaveCorrectly() {
-        // La anotación @Data de Lombok genera `equals` y `hashCode` basados en todos los campos.
+        // Lombok's @Data annotation generates `equals` and `hashCode` based on all fields.
         User user1 = new User(1, "user@example.com", "pass", Role.USER);
         User user2 = new User(1, "user@example.com", "pass", Role.USER);
         User user3 = new User(2, "another@example.com", "pass123", Role.ADMIN);
