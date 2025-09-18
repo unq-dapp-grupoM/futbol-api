@@ -2,13 +2,16 @@ package com.dapp.futbol_api.model.dto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data // La anotación de Lombok que genera getters, setters, toString, etc.
 public class PlayerDTO {
-    private String nombre;
-    private String numeroDorsal;
-    private String edad;
-    private String altura;
-    private String posiciones;
-    private String nacionalidad;
-    private String equipoActual;
+    private String name;
+    private String shirtNumber;
+    private String age;
+    private String height;
+    private String positions;
+    private String nationality;
+    private String currentTeam;
+    private List<PlayerMatchStatsDTO> matchStats;
 }
