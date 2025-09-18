@@ -35,4 +35,7 @@ jobs:
 
       # 4. Ejecuta el comando de compilación y pruebas de Gradle usando el wrapper.
       - name: Build with Gradle and run unit tests
+        env:
+          API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
+          API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
         run: ./gradlew build

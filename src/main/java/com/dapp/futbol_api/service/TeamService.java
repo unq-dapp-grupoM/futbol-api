@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.dapp.futbol_api.model.dto.TeamDTO;
+import com.dapp.futbol_api.model.dto.TeamPlayerDTO;
 import com.dapp.futbol_api.model.dto.GameMatchDTO;
 
 @Service
@@ -35,7 +36,8 @@ public class TeamService {
 
             // 1. Manejar el banner de cookies
             try {
-                wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(".css-1wc0q5e"))).click();
+                wait.until(ExpectedConditions.elementToBeClickable(
+                        By.xpath("//button[text()='Aceptar todo']"))).click();
                 log.info("Banner de cookies aceptado.");
             } catch (Exception e) {
                 log.warn("No se encontró o no se pudo hacer clic en el botón de cookies. Continuando...");
@@ -49,7 +51,7 @@ public class TeamService {
             searchBox.sendKeys(teamName);
             searchBox.sendKeys(Keys.ENTER);
 
-            // 3. Esperar los resultados y hacer clic en el primero
+            // 3. Esperar los resultados y hacer clic en el primer equipo
             log.info("Esperando resultados de la búsqueda...");
             wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
             log.info("Resultados encontrados. Haciendo clic en el primer equipo.");
@@ -58,9 +60,13 @@ public class TeamService {
                             By.xpath("//div[@class='search-result']/table/tbody/tr[2]/td[1]/a")));
             firstResult.click();
 
-            // 4. Esperar a que la página del equipo cargue
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='header']")));
-            log.info("Página del equipo cargada.");
+            // 4. Esperar a que la página del equipo cargue y extraer datos de la plantilla
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.id("team-squad-stats")));
+            log.info("Página del equipo cargada. Extrayendo datos de la plantilla...");
+
+            TeamDTO teamDTO = new TeamDTO();
+            teamDTO.setName(extractText(driver, By.cssSelector("span.team-header-name")));
+            teamDTO.setSquad(scrapeSquadData(driver));
 
             // 5. Navegar a la página de "Encuentros"
             log.info("Navegando a la página de Encuentros...");
@@ -70,10 +76,11 @@ public class TeamService {
             fixturesLink.click();
 
             // 6. Esperar a que la página de encuentros cargue y extraer datos
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.id("team-fixture-wrapper")));
-            log.info("Página de Encuentros cargada. Extrayendo datos...");
+            wait.until(ExpectedConditions.presenceOfElementLocated(By.id("team-fixtures")));
+            log.info("Página de Encuentros cargada. Extrayendo datos de partidos...");
 
-            return scrapeTeamData(driver);
+            teamDTO.setFixture(scrapeFixtureData(driver, teamDTO.getName()));
+            return teamDTO;
         } finally {
             if (driver != null) {
                 driver.quit();
@@ -81,13 +88,8 @@ public class TeamService {
         }
     }
 
-    public TeamDTO scrapeTeamData(WebDriver driver) {
-        TeamDTO teamDTO = new TeamDTO();
+    private List<GameMatchDTO> scrapeFixtureData(WebDriver driver, String teamName) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-
-        String teamName = extractText(driver, By.cssSelector("span.team-header-name"));
-        teamDTO.setName(teamName);
-
         List<WebElement> matchRows;
         try {
             wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#team-fixtures .divtable-body")));
@@ -97,8 +99,7 @@ public class TeamService {
             }
         } catch (Exception e) {
             log.error("No se encontraron partidos en el fixture para {}.", teamName, e);
-            teamDTO.setFixture(List.of(GameMatchDTO.builder().cup("No se encontraron datos de partidos.").build()));
-            return teamDTO;
+            return List.of(GameMatchDTO.builder().cup("No se encontraron datos de partidos.").build());
         }
 
         List<GameMatchDTO> allMatches = new ArrayList<>();
@@ -108,13 +109,13 @@ public class TeamService {
             fixture.setDate(extractDate(matchRow));
             fixture.setScore(extractText(matchRow, By.cssSelector("div.result a")));
 
-            fixture.setResult("Pendiente");
+            fixture.setResult("Pendeing Match");
             if (!matchRow.findElements(By.cssSelector("a.box.w")).isEmpty()) {
-                fixture.setResult("Ganado");
+                fixture.setResult("Match Won");
             } else if (!matchRow.findElements(By.cssSelector("a.box.l")).isEmpty()) {
-                fixture.setResult("Perdido");
+                fixture.setResult("Lost Match");
             } else if (!matchRow.findElements(By.cssSelector("a.box.d")).isEmpty()) {
-                fixture.setResult("Empate");
+                fixture.setResult("Tied Match");
             }
 
             String homeTeam = extractText(matchRow, By.cssSelector("div.team.home a.team-link"));
@@ -136,8 +137,50 @@ public class TeamService {
             allMatches.add(fixture);
         }
 
-        teamDTO.setFixture(allMatches);
-        return teamDTO;
+        return allMatches;
+    }
+
+    private List<TeamPlayerDTO> scrapeSquadData(WebDriver driver) {
+        List<TeamPlayerDTO> squad = new ArrayList<>();
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement squadTable = wait
+                    .until(ExpectedConditions.presenceOfElementLocated(By.id("top-player-stats-summary-grid")));
+            List<WebElement> playerRows = squadTable.findElements(By.xpath(".//tbody/tr"));
+
+            for (WebElement row : playerRows) {
+                List<WebElement> cells = row.findElements(By.tagName("td"));
+                if (cells.size() < 15)
+                    continue; // Skip header or malformed rows
+
+                WebElement playerInfoCell = cells.get(0);
+                String name = extractText(playerInfoCell, By.cssSelector("a.player-link > span"));
+
+                List<WebElement> metaData = playerInfoCell.findElements(By.cssSelector("span > span.player-meta-data"));
+                String age = "N/A";
+                String position = "N/A";
+                if (metaData.size() >= 2) {
+                    age = metaData.get(0).getText();
+                    position = metaData.get(1).getText().replace(",", "").trim();
+                }
+
+                TeamPlayerDTO player = TeamPlayerDTO.builder()
+                        .name(name).age(age).position(position)
+                        .height(cells.get(2).getText()).weight(cells.get(3).getText())
+                        .apps(cells.get(4).getText()).minsPlayed(cells.get(5).getText())
+                        .goals(cells.get(6).getText()).assists(cells.get(7).getText())
+                        .yellowCards(cells.get(8).getText()).redCards(cells.get(9).getText())
+                        .shotsPerGame(cells.get(10).getText()).passSuccess(cells.get(11).getText())
+                        .aerialsWonPerGame(cells.get(12).getText()).manOfTheMatch(cells.get(13).getText())
+                        .rating(cells.get(14).getText())
+                        .build();
+
+                squad.add(player);
+            }
+        } catch (Exception e) {
+            log.error("Error al extraer los datos de la plantilla.", e);
+        }
+        return squad;
     }
 
     private String extractDate(WebElement matchRow) {
