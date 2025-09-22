@@ -29,6 +29,12 @@ public class TeamService {
 
     public TeamDTO getTeamInfoByName(String teamName) {
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments(
+                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
         WebDriver driver = new ChromeDriver(options);
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -46,8 +52,8 @@ public class TeamService {
             // 2. Buscar el jugador en la barra de búsqueda
             log.info("Buscando al equipo: {}", teamName);
             WebElement searchBox = wait.until(
-                    ExpectedConditions.visibilityOfElementLocated(
-                            By.cssSelector("input.SearchBar-module_searchBox__l4aAt")));
+                    ExpectedConditions.visibilityOfElementLocated(By.cssSelector(
+                            "input[placeholder='Buscar campeonatos, equipos y jugadores']")));
             searchBox.sendKeys(teamName);
             searchBox.sendKeys(Keys.ENTER);
 

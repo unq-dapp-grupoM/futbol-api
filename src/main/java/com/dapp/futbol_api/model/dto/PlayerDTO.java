@@ -4,7 +4,7 @@ import lombok.Data;
 
 import java.util.List;
 
-@Data // La anotación de Lombok que genera getters, setters, toString, etc.
+@Data
 public class PlayerDTO {
     private String name;
     private String shirtNumber;
