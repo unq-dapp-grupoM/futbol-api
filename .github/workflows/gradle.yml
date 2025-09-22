@@ -4,11 +4,11 @@ name: Java CI with Gradle
 # Define los eventos que dispararán este flujo de trabajo.
 on:
   # Se ejecuta cuando se hace un push a la rama 'main' y la rama 'dev'.
-  push:
-    branches: [ "main", "dev" ]
+  push:    
+    branches: [ "main", "dev", "ft-render-config" ]
   # Se ejecuta cuando se crea o actualiza un Pull Request que apunta a 'main' y 'dev'.
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "ft-render-config" ]
 
 # Define los trabajos (jobs) que se ejecutarán.
 jobs:
@@ -39,3 +39,17 @@ jobs:
           API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
           API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
         run: ./gradlew build
+
+  # Nuevo trabajo para desplegar en Render.
+  deploy-to-render:
+    # Este trabajo depende de que 'build-and-test' termine exitosamente.
+    needs: build-and-test
+    # Se ejecuta solo cuando hay un push a la rama 'ft-render-config'.
+    if: github.ref == 'refs/heads/ft-render-config' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          echo "Triggering Render deployment..."
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          echo "Render deployment triggered!"
