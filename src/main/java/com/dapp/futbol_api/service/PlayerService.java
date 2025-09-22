@@ -28,6 +28,12 @@ public class PlayerService {
 
     public PlayerDTO getPlayerInfoByName(String playerName) {
         ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless=new");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments(
+                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
         WebDriver driver = new ChromeDriver(options);
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
@@ -35,7 +41,6 @@ public class PlayerService {
 
             // 1. Manejar el banner de cookies
             try {
-                // El selector anterior .css-1wc0q5e cambió. Se usa XPath para mayor robustez.
                 wait.until(ExpectedConditions.elementToBeClickable(
                         By.xpath("//button[text()='Aceptar todo']"))).click();
                 log.info("Banner de cookies aceptado.");
@@ -46,8 +51,8 @@ public class PlayerService {
             // 2. Buscar el jugador en la barra de búsqueda
             log.info("Buscando al jugador: {}", playerName);
             WebElement searchBox = wait.until(
-                    ExpectedConditions
-                            .visibilityOfElementLocated(By.cssSelector("input.SearchBar-module_searchBox__l4aAt")));
+                    ExpectedConditions.visibilityOfElementLocated(
+                            By.cssSelector("input[placeholder='Buscar campeonatos, equipos y jugadores']")));
             searchBox.sendKeys(playerName);
             searchBox.sendKeys(Keys.ENTER);
 
@@ -108,7 +113,7 @@ public class PlayerService {
         // Edad
         String ageText = extractValueFromInfoDiv(infoContainer, "Edad");
         if (!ageText.equals("No encontrado")) {
-            player.setAge(ageText.split(" ")[0]); // Tomamos solo el número de la edad
+            player.setAge(ageText.split(" ")[0]);
         } else {
             player.setAge(ageText);
         }
@@ -116,7 +121,6 @@ public class PlayerService {
         // Altura
         player.setHeight(extractValueFromInfoDiv(infoContainer, "Altura"));
 
-        // Nacionalidad (es un span separado, caso especial)
         player.setNationality(extractText(infoContainer,
                 By.xpath(".//span[contains(text(),'Nacionalidad')]/following-sibling::span")));
 
