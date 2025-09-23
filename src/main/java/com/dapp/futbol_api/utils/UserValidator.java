@@ -14,40 +14,40 @@ public class UserValidator {
 
     private final UserRepository repository;
 
-    // Expresión regular estándar para la validación de emails.
+    // Standard regular expression for email validation.
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
-    // Expresión regular para la contraseña: al menos 6 caracteres y un número.
+    // Regular expression for the password: at least 6 characters and one number.
     private static final String PASSWORD_REGEX = "^(?=.*[0-9]).{6,}$";
     private static final int MAX_PASSWORD_LENGTH = 128;
 
 
     public void validateRegistrationRequest(RegisterRequest request) {
-        // Normalizamos el email antes de validar
+        // Normalize the email before validating
         request.setEmail(normalizeEmail(request.getEmail()));
 
-        // Validación del formato del email
+        // Validate the email format
         validateEmailFormat(request.getEmail());
 
-        // Verificación de que el email no esté ya en uso
+        // Verify that the email is not already in use
         if (repository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("The email is already registered.");
         }
 
-        // Validación del formato de la contraseña
+        // Validate the password format
         validatePasswordFormat(request.getPassword());
     }
 
     public void validateAuthenticationRequest(AuthenticationRequest request) {
-        // Normalizamos el email antes de validar
+        // Normalize the email before validating
         request.setEmail(normalizeEmail(request.getEmail()));
 
-        // Validación del formato del email
+        // Validate the email format
         validateEmailFormat(request.getEmail());
         
-        // Validación del formato de la contraseña
+        // Validate the password format
         validatePasswordFormat(request.getPassword());
 
-        // Verificación de que el usuario exista
+        // Verify that the user exists
         if (repository.findByEmail(request.getEmail()).isEmpty()) {
             throw new IllegalArgumentException("User with the provided email is not registered.");
         }
