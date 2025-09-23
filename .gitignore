@@ -31,7 +31,10 @@ out/
 /nbbuild/
 /dist/
 /nbdist/
-/.nb-gradle/
+/.nb-gradle/# Ignore local properties file
+/src/main/resources/application-local.properties
+
 
 ### VS Code ###
 .vscode/
+/src/main/java/com/dapp/futbol_api/web
