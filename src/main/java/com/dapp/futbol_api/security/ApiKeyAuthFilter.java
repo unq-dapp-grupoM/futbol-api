@@ -27,6 +27,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         // No procesar si ya hay una autenticación en el contexto
+        // Do not process if there is already an authentication in the context
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
@@ -36,10 +37,11 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
 
         if (potentialApiKey != null && potentialApiKey.equals(principalRequestHeader)) {
             // Clave válida, creamos una autenticación simple para el sistema/servicio
+            // Valid key, create a simple authentication for the system/service
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     "api-service",
                     null,
-                    AuthorityUtils.createAuthorityList("ROLE_SERVICE") // Rol para servicios
+                    AuthorityUtils.createAuthorityList("ROLE_SERVICE") // Role for services
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }

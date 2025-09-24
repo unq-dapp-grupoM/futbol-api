@@ -17,24 +17,24 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/searchPlayer")
-@Tag(name = "Info de Jugadores", description = "Endpoints para obtener información de jugadores.")
+@Tag(name = "Player Info", description = "Endpoints to get player information.")
 @SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class PlayerController {
 
   private final PlayerService playerService;
 
-  @Operation(summary = "Buscar y obtener información de un jugador por nombre", description = "Busca un jugador por su nombre en WhoScored y extrae sus detalles. ¡REQUIERE AUTENTICACIÓN!")
+  @Operation(summary = "Search and get player information by name", description = "Searches for a player by name on WhoScored and extracts their details. AUTHENTICATION REQUIRED!")
   @GetMapping("/playerName")
   public ResponseEntity<?> getPlayerInfoByName(
-      @Parameter(description = "Nombre del jugador a buscar.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
+      @Parameter(description = "Name of the player to search for.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
     try {
       PlayerDTO player = playerService.getPlayerInfoByName(playerName);
       return ResponseEntity.ok(player);
     } catch (Exception e) {
       e.printStackTrace();
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Error al buscar o procesar la información del jugador '" + playerName + "': " + e.getMessage());
+          .body("Error searching or processing player information for '" + playerName + "': " + e.getMessage());
     }
   }
 }

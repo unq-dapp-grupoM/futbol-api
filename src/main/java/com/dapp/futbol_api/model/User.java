@@ -41,7 +41,4 @@ public class User implements UserDetails {
     public String getUsername() {
         return email;
     }
-
-    // Para simplificar, asumimos que las cuentas nunca expiran, se bloquean, etc.
-    // Puedes implementar una lógica más compleja aquí si lo necesitas.
 }

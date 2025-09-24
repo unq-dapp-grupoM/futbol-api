@@ -20,7 +20,6 @@ public class UserValidator {
     private static final String PASSWORD_REGEX = "^(?=.*[0-9]).{6,}$";
     private static final int MAX_PASSWORD_LENGTH = 128;
 
-
     public void validateRegistrationRequest(RegisterRequest request) {
         // Normalizamos el email antes de validar
         request.setEmail(normalizeEmail(request.getEmail()));
@@ -43,8 +42,8 @@ public class UserValidator {
 
         // Validación del formato del email
         validateEmailFormat(request.getEmail());
-        
-        // Validación del formato de la contraseña
+
+        // Validate the password format
         validatePasswordFormat(request.getPassword());
 
         // Verificación de que el usuario exista
@@ -72,7 +71,8 @@ public class UserValidator {
         }
 
         if (password == null || !Pattern.matches(PASSWORD_REGEX, password)) {
-            throw new IllegalArgumentException("Password must be at least 6 characters long and contain at least one number.");
+            throw new IllegalArgumentException(
+                    "Password must be at least 6 characters long and contain at least one number.");
         }
     }
 }
