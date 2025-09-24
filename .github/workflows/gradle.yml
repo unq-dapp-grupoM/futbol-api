@@ -46,5 +46,6 @@ jobs:
           API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./gradlew build jacocoTestReport sonarqube \
-            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+          ./gradlew build jacocoTestReport sonar \
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml \
+            -Dsonar.organization=unq-dapp-grupom
