@@ -1,22 +1,17 @@
-# Name of the workflow that will be displayed in the "Actions" tab of GitHub.
 name: Java CI with Gradle
 
-# Defines the events that will trigger this workflow.
 on:
-  # Runs when a push is made to the 'main' branch.
   push:
-    branches: [ "main" ]
-  # Runs when a Pull Request targeting 'main' is created or updated.
+     branches: 
+     - main
   pull_request:
-    branches: [ "main" ]
+     branches:
+      - main
 
-# Defines the jobs that will be executed.
 jobs:
   build-and-test:
-    # The type of virtual machine on which the job will run. 'ubuntu-latest' is a standard option.
     runs-on: ubuntu-latest
 
-    # The steps that make up the job. They are executed in sequence.
     steps:
       # 1. Clones your repository on the virtual machine.
       - name: Checkout repository
@@ -36,7 +31,15 @@ jobs:
           API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
         run: chmod +x ./gradlew
 
-      # 4. Run the Gradle build and test command using the wrapper.
+      # 4. Cache Gradle packages
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      # 5. Run the Gradle build and test command using the wrapper.
       - name: Build with Gradle and run unit tests
         env:
           API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
