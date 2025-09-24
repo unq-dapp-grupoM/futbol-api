@@ -20,31 +20,30 @@ public class UserValidator {
     private static final String PASSWORD_REGEX = "^(?=.*[0-9]).{6,}$";
     private static final int MAX_PASSWORD_LENGTH = 128;
 
-
     public void validateRegistrationRequest(RegisterRequest request) {
-        // Normalize the email before validating
+        // Normalize email before validating
         request.setEmail(normalizeEmail(request.getEmail()));
 
-        // Validate the email format
+        // Validate email format
         validateEmailFormat(request.getEmail());
 
         // Verify that the email is not already in use
         if (repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("The email is already registered.");
+            throw new IllegalArgumentException("The email is already in use.");
         }
 
-        // Validate the password format
+        // Validate password format
         validatePasswordFormat(request.getPassword());
     }
 
     public void validateAuthenticationRequest(AuthenticationRequest request) {
-        // Normalize the email before validating
+        // Normalize email before validating
         request.setEmail(normalizeEmail(request.getEmail()));
 
-        // Validate the email format
+        // Validate email format
         validateEmailFormat(request.getEmail());
-        
-        // Validate the password format
+
+        // Validate password format
         validatePasswordFormat(request.getPassword());
 
         // Verify that the user exists
@@ -62,17 +61,19 @@ public class UserValidator {
 
     private void validateEmailFormat(String email) {
         if (email == null || !Pattern.matches(EMAIL_REGEX, email)) {
-            throw new IllegalArgumentException("The provided email format is not valid.");
+            throw new IllegalArgumentException("The provided email format is invalid.");
         }
     }
 
     private void validatePasswordFormat(String password) {
         if (password != null && password.length() > MAX_PASSWORD_LENGTH) {
-            throw new IllegalArgumentException("Password cannot exceed " + MAX_PASSWORD_LENGTH + " characters.");
+            throw new IllegalArgumentException(
+                    "Password cannot be longer than " + MAX_PASSWORD_LENGTH + " characters.");
         }
 
         if (password == null || !Pattern.matches(PASSWORD_REGEX, password)) {
-            throw new IllegalArgumentException("Password must be at least 6 characters long and contain at least one number.");
+            throw new IllegalArgumentException(
+                    "Password must be at least 6 characters long and contain at least one digit.");
         }
     }
 }

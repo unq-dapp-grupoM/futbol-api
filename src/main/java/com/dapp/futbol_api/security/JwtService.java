@@ -32,10 +32,23 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
+    /**
+     * Generates a JWT for the given user details.
+     * 
+     * @param userDetails The user details.
+     * @return A JWT string.
+     */
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
 
+    /**
+     * Generates a JWT with extra claims for the given user details.
+     * 
+     * @param extraClaims Extra claims to add to the token.
+     * @param userDetails The user details.
+     * @return A JWT string.
+     */
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
                 .claims(extraClaims)
@@ -46,15 +59,34 @@ public class JwtService {
                 .compact();
     }
 
+    /**
+     * Validates a token.
+     * 
+     * @param token       The token to validate.
+     * @param userDetails The user details to validate against.
+     * @return True if the token is valid, false otherwise.
+     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
 
+    /**
+     * Checks if a token is expired.
+     * 
+     * @param token The token to check.
+     * @return True if the token is expired, false otherwise.
+     */
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
 
+    /**
+     * Extracts all claims from a token.
+     * 
+     * @param token The token to extract claims from.
+     * @return The claims.
+     */
     private Claims extractAllClaims(String token) {
         return Jwts.parser().verifyWith(getSignInKey()).build().parseSignedClaims(token).getPayload();
     }
