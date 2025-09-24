@@ -109,7 +109,7 @@ class UserTest {
         assertEquals(user1, user2, "Users with same data should be equal");
         assertNotEquals(user1, user3, "Users with different data should not be equal");
         assertNotEquals(user1, user4, "Users with different password should not be equal");
-        assertNotEquals(user1, null, "User should not be equal to null");
+        assertNotEquals(null, user1, "User should not be equal to null");
         assertNotEquals(user1, new Object(), "User should not be equal to an object of a different class");
         assertEquals(user1.hashCode(), user2.hashCode(), "Hashcodes for equal objects must be the same");
     }
