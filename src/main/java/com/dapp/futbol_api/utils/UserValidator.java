@@ -17,7 +17,7 @@ public class UserValidator {
     // Standard regular expression for email validation.
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
     // Regular expression for the password: at least 6 characters and one number.
-    private static final String PASSWORD_REGEX = "^(?=.*[0-9]).{6,}$";
+    private static final String PASSWORD_REGEX = "^(?=.*\\d).{6,}$";
     private static final int MAX_PASSWORD_LENGTH = 128;
 
     public void validateRegistrationRequest(RegisterRequest request) {
