@@ -37,6 +37,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  SPRING_PROFILES_ACTIVE: test
+
 permissions:
   pull-requests: read # allows SonarCloud to decorate PRs with analysis results
 
@@ -59,7 +62,7 @@ jobs:
             # mandatory
             -Dsonar.projectKey=unq-dapp-grupoM_futbol-api
             -Dsonar.organization=unq-dapp-grupom
-            -Dsonar.scm.provider=git
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
             # Comma-separated paths to directories containing main source files.
             #-Dsonar.sources= # optional, default is project base directory
             # Comma-separated paths to directories containing test source files.

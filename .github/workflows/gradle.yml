@@ -2,11 +2,12 @@ name: Java CI with Gradle
 
 on:
   push:
-     branches: 
-     - main
+    branches: 
+    - main
   pull_request:
-     branches:
+    branches:
       - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   build-and-test:
@@ -55,4 +56,6 @@ jobs:
           API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
           API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonar --info
+        run: | 
+          ./gradlew build jacocoTestReport sonar \
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
