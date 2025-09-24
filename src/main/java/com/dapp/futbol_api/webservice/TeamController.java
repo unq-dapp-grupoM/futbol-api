@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/fixtureTeam")
+@RequestMapping("/api/teamInfo")
 @Tag(name = "Team Info", description = "Endpoints for team information.")
 @SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class TeamController {
 
     private final TeamService teamService;
 
-    @Operation(summary = "Search and get team fixtures", description = "Searches for a team's match history. AUTHENTICATION REQUIRED!")
+    @Operation(summary = "Search and get team info", description = "Find a team and your players. AUTHENTICATION REQUIRED!")
     @GetMapping("/teamName")
     public ResponseEntity<?> getTeamInfoByName(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
