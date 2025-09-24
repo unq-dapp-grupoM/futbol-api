@@ -60,6 +60,14 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+sonar {
+  properties {
+    property "sonar.projectKey", "unq-dapp-grupoM_futbol-api"
+    property "sonar.organization", "unq-dapp-grupom"
+  }
 }
 
 jacocoTestReport {
@@ -69,5 +77,3 @@ jacocoTestReport {
     }
 	dependsOn test
 }
-
-check.dependsOn jacocoTestReport
