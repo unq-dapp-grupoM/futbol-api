@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import com.dapp.futbol_api.model.dto.TeamDTO;
 import com.dapp.futbol_api.model.dto.TeamPlayerDTO;
-import com.dapp.futbol_api.model.dto.GameMatchDTO;
 
 @Service
 public class TeamService {
