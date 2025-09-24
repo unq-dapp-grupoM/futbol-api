@@ -5,6 +5,7 @@ import com.dapp.futbol_api.model.dto.PlayerMatchStatsDTO;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.SearchContext;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -59,7 +60,12 @@ public class PlayerService {
 
             // 3. Wait for results and click the first one
             log.info("Waiting for search results...");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            try {
+                wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            } catch (TimeoutException e) {
+                log.error("Timeout waiting for player page to load.");
+                throw new IllegalArgumentException("Player of name \'" + playerName + "\' not found or page took too long to load.");
+            }
             log.info("Results found. Clicking on the first player.");
             WebElement firstResult = wait.until(
                     ExpectedConditions.elementToBeClickable(
