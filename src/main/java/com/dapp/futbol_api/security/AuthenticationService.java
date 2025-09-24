@@ -22,25 +22,25 @@ public class AuthenticationService {
     private final UserValidator userValidator;
 
     public String register(RegisterRequest request) {
-        // Delegamos la validación al UserValidator
+        // Delegate validation to UserValidator
         userValidator.validateRegistrationRequest(request);
 
         var user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER) // Por defecto, rol USER
+                .role(Role.USER) // Default role is USER
                 .build();
         repository.save(user);
-        return "Successfully registered!";
+        return "User registered successfully!";
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        // Delegamos la validación de formato al UserValidator
+        // Delegate format validation to UserValidator
         userValidator.validateAuthenticationRequest(request);
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        // Si llega aquí, el usuario está autenticado
+        // If it gets here, the user is authenticated
         var user = repository.findByEmail(request.getEmail()).orElseThrow();
         var jwtToken = jwtService.generateToken(user);
         return AuthenticationResponse.builder().token(jwtToken).build();

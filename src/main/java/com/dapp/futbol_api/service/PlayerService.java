@@ -39,52 +39,52 @@ public class PlayerService {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
             driver.get(BASE_URL);
 
-            // 1. Manejar el banner de cookies
+            // 1. Handle cookie banner
             try {
                 wait.until(ExpectedConditions.elementToBeClickable(
                         By.xpath("//button[text()='Aceptar todo']"))).click();
-                log.info("Banner de cookies aceptado.");
+                log.info("Cookie banner accepted.");
             } catch (Exception e) {
-                log.warn("No se encontró o no se pudo hacer clic en el botón de cookies. Continuando...");
+                log.warn("Cookie button not found or could not be clicked. Continuing...");
             }
 
-            // 2. Buscar el jugador en la barra de búsqueda
-            log.info("Buscando al jugador: {}", playerName);
+            // 2. Search for the player in the search bar
+            log.info("Searching for player: {}", playerName);
             WebElement searchBox = wait.until(
                     ExpectedConditions.visibilityOfElementLocated(
                             By.cssSelector("input[placeholder='Buscar campeonatos, equipos y jugadores']")));
             searchBox.sendKeys(playerName);
             searchBox.sendKeys(Keys.ENTER);
 
-            // 3. Esperar los resultados y hacer clic en el primero
-            log.info("Esperando resultados de la búsqueda...");
+            // 3. Wait for results and click the first one
+            log.info("Waiting for search results...");
             wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
-            log.info("Resultados encontrados. Haciendo clic en el primer jugador.");
+            log.info("Results found. Clicking on the first player.");
             WebElement firstResult = wait.until(
                     ExpectedConditions.elementToBeClickable(
                             By.xpath("//div[@class='search-result']/table/tbody/tr[2]/td[1]/a")));
             firstResult.click();
 
-            // 4. Esperar a que la página del jugador cargue y extraer datos
+            // 4. Wait for the player page to load and extract data
             wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='header']")));
-            log.info("Página del jugador cargada. Extrayendo datos...");
+            log.info("Player page loaded. Extracting data...");
 
             WebElement headerContainer = driver.findElement(By.xpath("//div[@class='header']"));
             PlayerDTO playerDTO = scrapePlayerData(headerContainer);
 
-            // 5. Navegar a la pestaña "Estadísticas del Partido"
-            log.info("Navegando a la pestaña 'Estadísticas del Partido'...");
+            // 5. Navigate to the "Match Statistics" tab
+            log.info("Navigating to 'Match Statistics' tab...");
             try {
                 WebElement statsLink = wait.until(ExpectedConditions.elementToBeClickable(
                         By.xpath("//div[@id='sub-navigation']//a[text()='Estadísticas del Partido']")));
                 statsLink.click();
 
-                // 6. Esperar a que la tabla de estadísticas cargue y extraer datos
+                // 6. Wait for the statistics table to load and extract data
                 wait.until(ExpectedConditions.presenceOfElementLocated(By.id("statistics-table-summary-matches")));
-                log.info("Página de estadísticas cargada. Extrayendo datos de partidos...");
+                log.info("Statistics page loaded. Extracting match data...");
                 playerDTO.setMatchStats(scrapePlayerMatchStats(driver));
             } catch (Exception e) {
-                log.error("No se pudo navegar o extraer las estadísticas de los partidos.", e);
+                log.error("Could not navigate to or extract match statistics.", e);
             }
             return playerDTO;
         } finally {
@@ -97,40 +97,40 @@ public class PlayerService {
     public PlayerDTO scrapePlayerData(WebElement headerContainer) {
         PlayerDTO player = new PlayerDTO();
 
-        // El contexto de búsqueda principal será el div 'header'
+        // The main search context will be the 'header' div
         player.setName(extractText(headerContainer, By.xpath(".//h1[@class='header-name']")));
 
-        // El resto de la información está en un sub-contenedor.
+        // The rest of the information is in a sub-container.
         WebElement infoContainer = headerContainer.findElement(By.xpath(".//div[contains(@class, 'col12-lg-10')]"));
 
-        // Equipo Actual (es un enlace, caso especial)
+        // Current Team (it's a link, special case)
         player.setCurrentTeam(
                 extractText(infoContainer, By.xpath(".//span[contains(text(),'Equipo Actual')]/following-sibling::a")));
 
-        // Número de Dorsal
+        // Shirt Number
         player.setShirtNumber(extractValueFromInfoDiv(infoContainer, "Número de Dorsal"));
 
-        // Edad
+        // Age
         String ageText = extractValueFromInfoDiv(infoContainer, "Edad");
-        if (!ageText.equals("No encontrado")) {
+        if (!ageText.equals("Not found")) {
             player.setAge(ageText.split(" ")[0]);
         } else {
             player.setAge(ageText);
         }
 
-        // Altura
+        // Height
         player.setHeight(extractValueFromInfoDiv(infoContainer, "Altura"));
 
         player.setNationality(extractText(infoContainer,
                 By.xpath(".//span[contains(text(),'Nacionalidad')]/following-sibling::span")));
 
-        // Posiciones
+        // Positions
         List<WebElement> positionElements = infoContainer
                 .findElements(By.xpath(".//span[contains(text(),'Posiciones')]/following-sibling::span/span"));
         String positions = positionElements.stream()
                 .map(WebElement::getText)
                 .collect(Collectors.joining(" "));
-        player.setPositions(positions.isEmpty() ? "No encontrado" : positions);
+        player.setPositions(positions.isEmpty() ? "Not found" : positions);
         return player;
     }
 
@@ -138,22 +138,22 @@ public class PlayerService {
         try {
             return context.findElement(locator).getText();
         } catch (Exception e) {
-            log.warn("No se pudo encontrar el elemento con el localizador: {}", locator);
-            return "No encontrado";
+            log.warn("Could not find element with locator: {}", locator);
+            return "Not found";
         }
     }
 
     /**
-     * Extrae el valor de un div de información que sigue el patrón "Etiqueta:
-     * Valor".
+     * Extracts the value from an information div that follows the "Label: Value"
+     * pattern.
      * 
-     * @param infoContainer El WebElement que contiene los divs de información.
-     * @param label         La etiqueta de texto a buscar (ej. "Altura").
-     * @return El valor extraído como String, o "No encontrado".
+     * @param infoContainer The WebElement containing the information divs.
+     * @param label         The text label to search for (e.g., "Height").
+     * @return The extracted value as a String, or "Not found".
      */
     private String extractValueFromInfoDiv(WebElement infoContainer, String label) {
         String fullText = extractText(infoContainer, By.xpath(".//span[contains(text(),'" + label + "')]/parent::div"));
-        if (!fullText.equals("No encontrado")) {
+        if (!fullText.equals("Not found")) {
             return fullText.replace(label + ":", "").trim();
         }
         return fullText;
@@ -195,7 +195,7 @@ public class PlayerService {
                 matchStats.add(match);
             }
         } catch (Exception e) {
-            log.error("Error al extraer las estadísticas de los partidos del jugador.", e);
+            log.error("Error extracting player match statistics.", e);
         }
         return matchStats;
     }
