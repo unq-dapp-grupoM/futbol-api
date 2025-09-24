@@ -39,9 +39,12 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
 
-      # 5. Run the Gradle build and test command using the wrapper.
-      - name: Build with Gradle and run unit tests
+      # 5. Build, test, coverage & SonarCloud analysis in a single step
+      - name: Build, coverage and analyze
         env:
           API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
           API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
-        run: ./gradlew build
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          ./gradlew build jacocoTestReport sonarqube \
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
