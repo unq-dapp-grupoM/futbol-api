@@ -5,7 +5,6 @@ import com.dapp.futbol_api.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,11 +15,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
+
 public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthFilter;
         private final ApiKeyAuthFilter apiKeyAuthFilter;
-        private final AuthenticationProvider authenticationProvider;
 
         private static final String[] WHITE_LIST_URLS = {
                         "/api/auth/**",
@@ -39,9 +38,9 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
                                                 // El resto de endpoints requieren autenticación JWT
                                                 .anyRequest().authenticated())
+
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authenticationProvider(authenticationProvider)
                                 // El filtro de API Key se ejecuta primero
                                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
                                 // Luego el filtro de JWT

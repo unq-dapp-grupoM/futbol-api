@@ -13,13 +13,13 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.dapp.futbol_api.model.dto.TeamDTO;
 import com.dapp.futbol_api.model.dto.TeamPlayerDTO;
-import com.dapp.futbol_api.model.dto.GameMatchDTO;
 
 @Service
 public class TeamService {
@@ -59,7 +59,12 @@ public class TeamService {
 
             // 3. Wait for results and click the first team
             log.info("Waiting for search results...");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            try {
+                wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            } catch (TimeoutException e) {
+                log.error("Timeout waiting for team page to load.");
+                throw new IllegalArgumentException("Team of name \'" + teamName + "\' not found or page took too long to load.");
+            }
             log.info("Results found. Clicking on the first team.");
             WebElement firstResult = wait.until(
                     ExpectedConditions.elementToBeClickable(

@@ -5,6 +5,7 @@ import com.dapp.futbol_api.model.dto.PlayerMatchStatsDTO;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.SearchContext;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -25,6 +26,7 @@ public class PlayerService {
 
     private static final Logger log = LoggerFactory.getLogger(PlayerService.class);
     private static final String BASE_URL = "https://es.whoscored.com/";
+    private static final String NOT_FOUND = "Not found";
 
     public PlayerDTO getPlayerInfoByName(String playerName) {
         ChromeOptions options = new ChromeOptions();
@@ -58,7 +60,12 @@ public class PlayerService {
 
             // 3. Wait for results and click the first one
             log.info("Waiting for search results...");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            try {
+                wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            } catch (TimeoutException e) {
+                log.error("Timeout waiting for player page to load.");
+                throw new IllegalArgumentException("Player of name \'" + playerName + "\' not found or page took too long to load.");
+            }
             log.info("Results found. Clicking on the first player.");
             WebElement firstResult = wait.until(
                     ExpectedConditions.elementToBeClickable(
@@ -112,7 +119,7 @@ public class PlayerService {
 
         // Age
         String ageText = extractValueFromInfoDiv(infoContainer, "Edad");
-        if (!ageText.equals("Not found")) {
+        if (!ageText.equals(NOT_FOUND)) {
             player.setAge(ageText.split(" ")[0]);
         } else {
             player.setAge(ageText);
@@ -126,20 +133,20 @@ public class PlayerService {
 
         // Positions
         List<WebElement> positionElements = infoContainer
-                .findElements(By.xpath(".//span[contains(text(),'Posiciones')]/following-sibling::span/span"));
+            .findElements(By.xpath(".//span[contains(text(),'Posiciones')]/following-sibling::span/span"));
         String positions = positionElements.stream()
-                .map(WebElement::getText)
-                .collect(Collectors.joining(" "));
-        player.setPositions(positions.isEmpty() ? "Not found" : positions);
+            .map(WebElement::getText)
+            .collect(Collectors.joining(" "));
+        player.setPositions(positions.isEmpty() ? NOT_FOUND : positions);
         return player;
-    }
+        }
 
     private String extractText(SearchContext context, By locator) {
         try {
             return context.findElement(locator).getText();
         } catch (Exception e) {
             log.warn("Could not find element with locator: {}", locator);
-            return "Not found";
+            return NOT_FOUND;
         }
     }
 
@@ -153,7 +160,7 @@ public class PlayerService {
      */
     private String extractValueFromInfoDiv(WebElement infoContainer, String label) {
         String fullText = extractText(infoContainer, By.xpath(".//span[contains(text(),'" + label + "')]/parent::div"));
-        if (!fullText.equals("Not found")) {
+        if (!fullText.equals(NOT_FOUND)) {
             return fullText.replace(label + ":", "").trim();
         }
         return fullText;

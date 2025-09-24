@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,15 +25,9 @@ public class TeamController {
 
     @Operation(summary = "Search and get team info", description = "Find a team and your players. AUTHENTICATION REQUIRED!")
     @GetMapping("/teamName")
-    public ResponseEntity<?> getTeamInfoByName(
+    public ResponseEntity<TeamDTO> getTeamInfoByName(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
-        try {
-            TeamDTO team = teamService.getTeamInfoByName(teamName);
-            return ResponseEntity.ok(team);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error searching or processing team information for '" + teamName + "': " + e.getMessage());
-        }
+        TeamDTO team = teamService.getTeamInfoByName(teamName);
+        return ResponseEntity.ok(team);
     }
 }

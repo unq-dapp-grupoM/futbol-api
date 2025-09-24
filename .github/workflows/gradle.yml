@@ -1,26 +1,24 @@
-# Name of the workflow that will be displayed in the "Actions" tab of GitHub.
 name: Java CI with Gradle
 
-# Defines the events that will trigger this workflow.
 on:
-  # Runs when a push is made to the 'main' branch.
   push:
-    branches: [ "main" ]
-  # Runs when a Pull Request targeting 'main' is created or updated.
+    branches: 
+    - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
-# Defines the jobs that will be executed.
 jobs:
   build-and-test:
-    # The type of virtual machine on which the job will run. 'ubuntu-latest' is a standard option.
     runs-on: ubuntu-latest
 
-    # The steps that make up the job. They are executed in sequence.
     steps:
       # 1. Clones your repository on the virtual machine.
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       # 2. Set up the JDK. Your project uses Java 21.
       - name: Set up JDK 21
@@ -31,11 +29,33 @@ jobs:
 
       # 3. Add the necessary permissions for the build.
       - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
-
-      # 4. Run the Gradle build and test command using the wrapper.
-      - name: Build with Gradle and run unit tests
         env:
           API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
           API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
-        run: ./gradlew build
+        run: chmod +x ./gradlew
+
+      # 4. Cache SonarQube packages
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      # 5. Cache Gradle packages
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: ${{ runner.os }}-gradle
+
+      # 6. Build and analyze
+      - name: Build and analyze
+        env:
+          API_SECURITY_JWT_SECRET_KEY: ${{ secrets.API_SECURITY_JWT_SECRET_KEY }}
+          API_SECURITY_KEY: ${{ secrets.API_SECURITY_KEY }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: | 
+          ./gradlew build jacocoTestReport sonar \
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
