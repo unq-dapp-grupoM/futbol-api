@@ -1,6 +1,6 @@
 # --- Fase de Construcción (Build Stage) ---
-# Usamos una imagen de Gradle con Java 17 para compilar el proyecto.
-FROM gradle:8.8-jdk17-jammy AS build
+# Usamos una imagen de Gradle con Java 21 para compilar el proyecto.
+FROM gradle:8.8-jdk21-jammy AS build
 
 # Establecemos el directorio de trabajo
 WORKDIR /app
@@ -8,38 +8,37 @@ WORKDIR /app
 # Copiamos los archivos de configuración de Gradle y el wrapper
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
-# Descargamos solo las dependencias para aprovechar el cache de capas de Docker
-# El comando 'dependencies' es más ligero que 'build'.
-# Damos permisos de ejecución al script de Gradle antes de usarlo
-RUN chmod +x gradlew
-
-# Usamos 'build' para descargar dependencias y generar la caché.
-# El '|| true' al final asegura que el build no falle si hay tests que no pasan (ya que no hemos copiado el código fuente aún).
-RUN ./gradlew build -x test --no-daemon --stacktrace || true
+# Descargamos las dependencias para cachearlas
+RUN ./gradlew build --no-daemon || true
 
 # Copiamos el resto del código fuente y construimos el JAR
 COPY src ./src
 RUN ./gradlew build -x test --no-daemon
 
 # --- Fase Final (Final Stage) ---
-# Usamos una imagen base de Debian con Java 17.
-FROM eclipse-temurin:17-jdk-jammy
+# Usamos una imagen base de Debian con Java 21.
+FROM eclipse-temurin:21-jdk-jammy
 
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias, Google Chrome y ChromeDriver en una sola capa para optimizar
+# Instalar dependencias para Chrome y ChromeDriver
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    --no-install-recommends && \
-    # Instalar Google Chrome
-    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    --no-install-recommends
+
+# Instalar Google Chrome.
+# Puedes verificar la última versión en https://google-chrome-browser.org/
+RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get install -y ./google-chrome-stable_current_amd64.deb && \
-    rm google-chrome-stable_current_amd64.deb && \
-    # Instalar ChromeDriver (versión correspondiente a Chrome)
-    # Chrome 125 -> ChromeDriver 125.0.6422.78
-    wget -q https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.78/linux64/chromedriver-linux64.zip && \
+    rm google-chrome-stable_current_amd64.deb
+
+# Instalar ChromeDriver.
+# Asegúrate de que la versión de ChromeDriver coincida con la de Google Chrome instalada.
+# Chrome 125 -> ChromeDriver 125.0.6422.78
+# Puedes encontrar las versiones en https://googlechromelabs.github.io/chrome-for-testing/
+RUN wget -q https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.78/linux64/chromedriver-linux64.zip && \
     unzip chromedriver-linux64.zip && \
     mv chromedriver-linux64/chromedriver /usr/bin/chromedriver && \
     chmod +x /usr/bin/chromedriver && \
