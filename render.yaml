@@ -10,7 +10,7 @@ services:
     # URL de la imagen en GitHub Container Registry
     # Reemplaza 'TU_USUARIO_DE_GITHUB/futbol-api' con tu usuario y nombre de repo
     image:
-      url: ghcr.io/TU_USUARIO_DE_GITHUB/futbol-api:main
+      url: ghcr.io/unq-dapp-grupoM/futbol-api:main
     # Configuración de salud para que Render sepa si tu app está lista
     healthCheckPath: /actuator/health # Asegúrate de tener Spring Boot Actuator
     # Variables de entorno (si las necesitas)
