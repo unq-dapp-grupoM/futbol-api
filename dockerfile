@@ -8,8 +8,9 @@ WORKDIR /app
 # Copiamos los archivos de configuración de Gradle y el wrapper
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
-# Descargamos las dependencias para cachearlas
-RUN ./gradlew build --no-daemon || true
+# Descargamos solo las dependencias para aprovechar el cache de capas de Docker
+# El comando 'dependencies' es más ligero que 'build'.
+RUN ./gradlew dependencies --no-daemon
 
 # Copiamos el resto del código fuente y construimos el JAR
 COPY src ./src
@@ -26,7 +27,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    --no-install-recommends
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* # Limpiamos la caché en la misma capa
 
 # Instalar Google Chrome.
 # Puedes verificar la última versión en https://google-chrome-browser.org/
