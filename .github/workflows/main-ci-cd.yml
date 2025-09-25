@@ -75,8 +75,8 @@ jobs:
           push: true
           # Etiqueta la imagen como 'latest' y con el nombre de la rama ('main')
           tags: |
-            ghcr.io/${{ github.repository_owner_lowercase }}/${{ github.event.repository.name }}:latest
-            ghcr.io/${{ github.repository_owner_lowercase }}/${{ github.event.repository.name }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
 
   trigger-render-deploy:
     name: Trigger Render Deploy
