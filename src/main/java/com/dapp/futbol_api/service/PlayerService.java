@@ -36,18 +36,12 @@ public class PlayerService {
         options.addArguments("--window-size=1920,1080");
         options.addArguments(
                 "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
-        // No es necesario setear la ruta del driver si ChromeDriver está en el PATH del
-        // sistema,
-        // como lo configuramos en el Dockerfile. Selenium lo encontrará
-        // automáticamente.
-        // System.setProperty("webdriver.chrome.driver", "/path/to/chromedriver");
 
         WebDriver driver = new ChromeDriver(options);
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
             driver.get(BASE_URL);
 
-            // 1. Handle cookie banner
             // 1. Handle cookie banner
             try {
                 wait.until(ExpectedConditions.elementToBeClickable(
