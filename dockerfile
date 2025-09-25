@@ -10,6 +10,9 @@ COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
 # Descargamos solo las dependencias para aprovechar el cache de capas de Docker
 # El comando 'dependencies' es más ligero que 'build'.
+# Damos permisos de ejecución al script de Gradle antes de usarlo
+RUN chmod +x gradlew
+
 RUN ./gradlew dependencies --no-daemon
 
 # Copiamos el resto del código fuente y construimos el JAR
