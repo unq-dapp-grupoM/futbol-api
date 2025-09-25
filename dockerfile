@@ -13,7 +13,9 @@ COPY gradle ./gradle
 # Damos permisos de ejecución al script de Gradle antes de usarlo
 RUN chmod +x gradlew
 
-RUN ./gradlew dependencies --no-daemon
+# Usamos 'build' para descargar dependencias y generar la caché.
+# El '|| true' al final asegura que el build no falle si hay tests que no pasan (ya que no hemos copiado el código fuente aún).
+RUN ./gradlew build -x test --no-daemon --stacktrace || true
 
 # Copiamos el resto del código fuente y construimos el JAR
 COPY src ./src
