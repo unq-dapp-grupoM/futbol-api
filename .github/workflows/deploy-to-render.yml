@@ -4,7 +4,7 @@ name: Deploy to Render
 on:
   push:
     branches:
-      - main  # O la rama que uses para producción (ej. master)
+      - ft-config-render
 
 jobs:
   deploy:
