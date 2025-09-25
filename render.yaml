@@ -1,0 +1,21 @@
+# render.yaml
+# Documentación: https://render.com/docs/blueprint-spec
+
+services:
+  # Un servicio web para la API de fútbol
+  - type: web
+    name: futbol-api
+    # Entorno de ejecución: Docker
+    env: docker
+    # Opcional: Especifica la rama a observar para despliegues automáticos
+    # autoDeploy: true # Descomenta si quieres que Render despliegue en cada push a la rama
+    # branch: main
+    # Configuración de salud para que Render sepa si tu app está lista
+    healthCheckPath: /actuator/health # Asegúrate de tener Spring Boot Actuator
+    # Configuración de Docker
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    # Variables de entorno (si las necesitas)
+    envVars:
+      - key: SERVER_PORT
+        value: 8080 # Render espera que el servicio escuche en el puerto 8080 por defecto
