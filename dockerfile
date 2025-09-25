@@ -8,8 +8,13 @@ WORKDIR /app
 # Copiamos los archivos de configuración de Gradle y el wrapper
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
-# Descargamos las dependencias para cachearlas
-RUN ./gradlew build --no-daemon || true
+
+# Damos permisos de ejecución al script de Gradle antes de usarlo
+RUN chmod +x gradlew
+
+# Usamos 'build' para descargar dependencias y generar la caché.
+# El '|| true' al final asegura que el build no falle si hay tests que no pasan (ya que no hemos copiado el código fuente aún).
+RUN ./gradlew build -x test --no-daemon --stacktrace || true
 
 # Copiamos el resto del código fuente y construimos el JAR
 COPY src ./src
@@ -22,27 +27,24 @@ FROM eclipse-temurin:21-jdk-jammy
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias para Chrome y ChromeDriver
+# Instalar dependencias, Google Chrome y ChromeDriver en una sola capa para optimizar
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
-    --no-install-recommends
-
-# Instalar Google Chrome.
-# Puedes verificar la última versión en https://google-chrome-browser.org/
-RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    --no-install-recommends && \
+    # Instalar Google Chrome
+    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
     apt-get install -y ./google-chrome-stable_current_amd64.deb && \
-    rm google-chrome-stable_current_amd64.deb
-
-# Instalar ChromeDriver.
-# Asegúrate de que la versión de ChromeDriver coincida con la de Google Chrome instalada.
-# Chrome 125 -> ChromeDriver 125.0.6422.78
-# Puedes encontrar las versiones en https://googlechromelabs.github.io/chrome-for-testing/
-RUN wget -q https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.78/linux64/chromedriver-linux64.zip && \
+    rm google-chrome-stable_current_amd64.deb && \
+    # Instalar ChromeDriver (versión correspondiente a Chrome)
+    # Chrome 125 -> ChromeDriver 125.0.6422.78
+    wget -q https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.78/linux64/chromedriver-linux64.zip && \
     unzip chromedriver-linux64.zip && \
     mv chromedriver-linux64/chromedriver /usr/bin/chromedriver && \
     chmod +x /usr/bin/chromedriver && \
-    rm chromedriver-linux64.zip
+    rm chromedriver-linux64.zip && \
+    # Limpiamos la caché de apt al final
+    rm -rf /var/lib/apt/lists/*
 
 # Copiamos el JAR construido desde la fase de 'build'
 COPY --from=build /app/build/libs/*.jar app.jar
