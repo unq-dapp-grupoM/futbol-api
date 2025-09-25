@@ -14,39 +14,39 @@ public class UserValidator {
 
     private final UserRepository repository;
 
-    // Expresión regular estándar para la validación de emails.
+    // Standard regular expression for email validation.
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$";
-    // Expresión regular para la contraseña: al menos 6 caracteres y un número.
-    private static final String PASSWORD_REGEX = "^(?=.*[0-9]).{6,}$";
+    // Regular expression for the password: at least 6 characters and one number.
+    private static final String PASSWORD_REGEX = "^(?=.*\\d).{6,}$";
     private static final int MAX_PASSWORD_LENGTH = 128;
 
     public void validateRegistrationRequest(RegisterRequest request) {
-        // Normalizamos el email antes de validar
+        // Normalize email before validating
         request.setEmail(normalizeEmail(request.getEmail()));
 
-        // Validación del formato del email
+        // Validate email format
         validateEmailFormat(request.getEmail());
 
-        // Verificación de que el email no esté ya en uso
+        // Verify that the email is not already in use
         if (repository.findByEmail(request.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("The email is already registered.");
+            throw new IllegalArgumentException("The email is already in use.");
         }
 
-        // Validación del formato de la contraseña
+        // Validate password format
         validatePasswordFormat(request.getPassword());
     }
 
     public void validateAuthenticationRequest(AuthenticationRequest request) {
-        // Normalizamos el email antes de validar
+        // Normalize email before validating
         request.setEmail(normalizeEmail(request.getEmail()));
 
-        // Validación del formato del email
+        // Validate email format
         validateEmailFormat(request.getEmail());
 
-        // Validate the password format
+        // Validate password format
         validatePasswordFormat(request.getPassword());
 
-        // Verificación de que el usuario exista
+        // Verify that the user exists
         if (repository.findByEmail(request.getEmail()).isEmpty()) {
             throw new IllegalArgumentException("User with the provided email is not registered.");
         }
@@ -61,18 +61,19 @@ public class UserValidator {
 
     private void validateEmailFormat(String email) {
         if (email == null || !Pattern.matches(EMAIL_REGEX, email)) {
-            throw new IllegalArgumentException("The provided email format is not valid.");
+            throw new IllegalArgumentException("The provided email format is invalid.");
         }
     }
 
     private void validatePasswordFormat(String password) {
         if (password != null && password.length() > MAX_PASSWORD_LENGTH) {
-            throw new IllegalArgumentException("Password cannot exceed " + MAX_PASSWORD_LENGTH + " characters.");
+            throw new IllegalArgumentException(
+                    "Password cannot be longer than " + MAX_PASSWORD_LENGTH + " characters.");
         }
 
         if (password == null || !Pattern.matches(PASSWORD_REGEX, password)) {
             throw new IllegalArgumentException(
-                    "Password must be at least 6 characters long and contain at least one number.");
+                    "Password must be at least 6 characters long and contain at least one digit.");
         }
     }
 }

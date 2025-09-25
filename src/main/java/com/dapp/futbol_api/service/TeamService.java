@@ -13,13 +13,13 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.openqa.selenium.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.dapp.futbol_api.model.dto.TeamDTO;
 import com.dapp.futbol_api.model.dto.TeamPlayerDTO;
-import com.dapp.futbol_api.model.dto.GameMatchDTO;
 
 @Service
 public class TeamService {
@@ -59,7 +59,13 @@ public class TeamService {
 
             // 3. Wait for results and click the first team
             log.info("Waiting for search results...");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            try {
+                wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
+            } catch (TimeoutException e) {
+                log.error("Timeout waiting for team page to load.");
+                throw new IllegalArgumentException(
+                        "Team of name \'" + teamName + "\' not found or page took too long to load.");
+            }
             log.info("Results found. Clicking on the first team.");
             WebElement firstResult = wait.until(
                     ExpectedConditions.elementToBeClickable(
@@ -74,76 +80,12 @@ public class TeamService {
             teamDTO.setName(extractText(driver, By.cssSelector("span.team-header-name")));
             teamDTO.setSquad(scrapeSquadData(driver));
 
-            // 5. Navigate to the "Fixtures" page
-            log.info("Navigating to Fixtures page...");
-            WebElement fixturesLink = wait.until(
-                    ExpectedConditions.elementToBeClickable(
-                            By.xpath("//div[@id='sub-navigation']//a[text()='Encuentros']")));
-            fixturesLink.click();
-
-            // 6. Wait for the fixtures page to load and extract data
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.id("team-fixtures")));
-            log.info("Fixtures page loaded. Extracting match data...");
-
-            teamDTO.setFixture(scrapeFixtureData(driver, teamDTO.getName()));
             return teamDTO;
         } finally {
             if (driver != null) {
                 driver.quit();
             }
         }
-    }
-
-    private List<GameMatchDTO> scrapeFixtureData(WebDriver driver, String teamName) {
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-        List<WebElement> matchRows;
-        try {
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#team-fixtures .divtable-body")));
-            matchRows = driver.findElements(By.cssSelector("#team-fixtures .divtable-row.item"));
-            if (matchRows.isEmpty()) {
-                throw new IllegalStateException("No match rows found on the fixtures page.");
-            }
-        } catch (Exception e) {
-            log.error("No matches found in the fixture for {}.", teamName, e);
-            return List.of(GameMatchDTO.builder().cup("No match data found.").build());
-        }
-
-        List<GameMatchDTO> allMatches = new ArrayList<>();
-        for (WebElement matchRow : matchRows) {
-            GameMatchDTO fixture = new GameMatchDTO();
-            fixture.setCup(extractText(matchRow, By.cssSelector("a.tournament-link")));
-            fixture.setDate(extractDate(matchRow));
-            fixture.setScore(extractText(matchRow, By.cssSelector("div.result a")));
-
-            fixture.setResult("Pendeing Match");
-            if (!matchRow.findElements(By.cssSelector("a.box.w")).isEmpty()) {
-                fixture.setResult("Match Won");
-            } else if (!matchRow.findElements(By.cssSelector("a.box.l")).isEmpty()) {
-                fixture.setResult("Lost Match");
-            } else if (!matchRow.findElements(By.cssSelector("a.box.d")).isEmpty()) {
-                fixture.setResult("Tied Match");
-            }
-
-            String homeTeam = extractText(matchRow, By.cssSelector("div.team.home a.team-link"));
-            String awayTeam = extractText(matchRow, By.cssSelector("div.team.away a.team-link"));
-            String homeRedCards = extractRedCard(matchRow, "div.team.home");
-            String awayRedCards = extractRedCard(matchRow, "div.team.away");
-
-            if (homeTeam.equalsIgnoreCase(teamName)) {
-                fixture.setActualTeam(homeTeam);
-                fixture.setRivalTeam(awayTeam);
-                fixture.setRedCardsActualTeam(homeRedCards);
-                fixture.setRedCardsRivalTeam(awayRedCards);
-            } else {
-                fixture.setActualTeam(awayTeam);
-                fixture.setRivalTeam(homeTeam);
-                fixture.setRedCardsActualTeam(awayRedCards);
-                fixture.setRedCardsRivalTeam(homeRedCards);
-            }
-            allMatches.add(fixture);
-        }
-
-        return allMatches;
     }
 
     private List<TeamPlayerDTO> scrapeSquadData(WebDriver driver) {
@@ -189,32 +131,12 @@ public class TeamService {
         return squad;
     }
 
-    private String extractDate(WebElement matchRow) {
-        List<WebElement> dateElements = matchRow.findElements(By.cssSelector("div.date"));
-        for (WebElement dateElement : dateElements) {
-            String dateText = dateElement.getText();
-            if (dateText != null && !dateText.trim().isEmpty()) {
-                return dateText;
-            }
-        }
-        log.warn("Could not find date for a match row.");
-        return "Not found";
-    }
-
     private String extractText(SearchContext context, By locator) {
         try {
             return context.findElement(locator).getText();
         } catch (Exception e) {
             log.warn("Could not find element with locator: {}", locator);
             return "Not found";
-        }
-    }
-
-    private String extractRedCard(WebElement matchRow, String teamSelector) {
-        try {
-            return matchRow.findElement(By.cssSelector(teamSelector + " span.rcard")).getText();
-        } catch (Exception e) {
-            return "0";
         }
     }
 }

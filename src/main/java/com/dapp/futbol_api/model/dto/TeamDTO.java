@@ -6,6 +6,5 @@ import lombok.Data;
 @Data
 public class TeamDTO {
     private String name;
-    private List<GameMatchDTO> fixture;
     private List<TeamPlayerDTO> squad;
 }
