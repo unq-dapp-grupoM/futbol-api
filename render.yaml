@@ -3,19 +3,25 @@ version: "1"
 services:
   - name: futbol-api
     type: web
-    # Indica a Render que use la instancia gratuita (free plan)
-    plan: free 
-    image: 
-      url: ghcr.io/unq-dapp-grupom/futbol-api:main
+    plan: free
+    
+    # Configuración para la imagen Docker preconstruida en GHCR
+    image:
+      url: ghcr.io/unq-dapp-grupom/futbol-api:main 
 
-    healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
+    startCommand: "java -jar app.jar" 
+
+    # Render asume que tu aplicación está lista cuando esta ruta responde 200 OK.
+    healthCheckPath: /actuator/health 
     
-    # Se recomienda dejar autodeploy: true si quieres CD
-    autoDeploy: true 
-    
+    # Permite que Render se re-despliegue automáticamente con cada nuevo commit que 
+    # tu GitHub Action suba a GHCR.
+    autoDeploy: true
+
     envVars:
+      # Referencia correcta al Secreto de Render (asumiendo que 'API_KEY' existe en tu Dashboard)
       - key: API_KEY
-        fromSecret: true
-      
+        value: ${{ secret.API_KEY }}
+
       - key: SPRING_PROFILES_ACTIVE
         value: production
