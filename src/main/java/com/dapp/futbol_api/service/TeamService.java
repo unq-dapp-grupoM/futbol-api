@@ -23,19 +23,20 @@ public class TeamService extends AbstractWebService {
         try (Playwright playwright = Playwright.create()) {
             Page page = createPage(playwright);
 
-            // 2. Search for the team
+            // Search for the team
             performSearch(page, teamName);
 
-            // 3. Find and click the first team result
-            // Los equipos suelen estar en el segundo bloque de resultados
-            Locator firstResult = page.locator("#search-result .search-result:nth-of-type(2) tbody tr:nth-child(2) a")
+            // Click the first team result
+            Locator firstResult = page
+                    .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(2) >> a")
                     .first();
             try {
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Esperar hasta 15 segundos
             } catch (Exception e) {
                 // Si no está en el segundo, buscar en el primero como fallback
-                log.warn("Team not found in the second result block, trying the first one.");
-                firstResult = page.locator("#search-result .search-result:first-of-type tbody tr:nth-child(2) a")
+                log.warn("Team '{}' not found in the second result block, trying the first one.", teamName);
+                firstResult = page
+                        .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(1) >> a")
                         .first();
                 firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000));
             }
@@ -43,9 +44,9 @@ public class TeamService extends AbstractWebService {
             firstResult.click();
             page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
-            // 4. Extract team and squad data
+            // Extract team and squad data
             TeamDTO teamDTO = new TeamDTO();
-            teamDTO.setName(extractText(page, "h1.team-header-name"));
+            teamDTO.setName(extractText(page, "h1.team-header"));
             teamDTO.setSquad(scrapeSquadData(page));
 
             return teamDTO;
@@ -57,14 +58,12 @@ public class TeamService extends AbstractWebService {
 
     private List<TeamPlayerDTO> scrapeSquadData(Page page) {
         List<TeamPlayerDTO> squad = new ArrayList<>();
-        Locator squadTableBody = page.locator("#player-table-statistics-body");
-        if (!squadTableBody.isVisible()) {
-            log.warn("Squad statistics table body not found.");
-            return squad;
-        }
+
+        // Get squad statistics table body
+        Locator squadTableBody = page.locator("tbody#player-table-statistics-body");
+        squadTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
 
         List<Locator> playerRows = squadTableBody.locator("tr").all();
-
         for (Locator row : playerRows) {
             String name = row.locator("td:nth-child(1) a.player-link span.iconize-icon-left").innerText();
             String age = row.locator("td:nth-child(1) span.player-meta-data:nth-of-type(1)").innerText();

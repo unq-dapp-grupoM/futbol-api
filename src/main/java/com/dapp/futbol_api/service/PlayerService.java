@@ -21,17 +21,14 @@ public class PlayerService extends AbstractWebService {
         try (Playwright playwright = Playwright.create()) {
             Page page = createPage(playwright);
 
-            // 2. Search for the player
+            // Search for the player
             performSearch(page, playerName);
 
-            // 3. Click on the first result
-            // Selector corregido para apuntar a la primera fila de datos (la que contiene
-            // 'td') dentro del contenedor de "Jugadores:".
+            // Click on the first player result
             Locator firstResult = page
                     .locator("div.search-result:has(h2:text('Jugadores:')) >> tbody tr:nth-child(2) >> a")
                     .first();
             try {
-                // ¡Solución! Esperar explícitamente a que el resultado sea visible.
                 firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Esperar hasta 15 segundos
             } catch (Exception e) {
                 log.error("Player '{}' not found in search results or timed out.", playerName);
@@ -40,11 +37,11 @@ public class PlayerService extends AbstractWebService {
             firstResult.click();
             page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
-            // 4. Scrape player data
+            // Scrape player data
             PlayerDTO playerDTO = scrapePlayerData(page);
 
-            // 5. Navigate to Match Statistics and scrape data
-            page.locator("//a[text()='Estadísticas del Partido']").click();
+            // Navigate to Match Statistics and scrape data
+            page.getByText("Estadísticas del Partido").click();
             page.waitForLoadState(LoadState.DOMCONTENTLOADED);
             playerDTO.setMatchStats(scrapePlayerMatchStats(page));
 
@@ -58,44 +55,23 @@ public class PlayerService extends AbstractWebService {
     public PlayerDTO scrapePlayerData(Page page) {
         PlayerDTO player = new PlayerDTO();
 
-        // ¡Solución! Esperar a que el contenedor principal de la información del
-        // jugador esté visible.
+        // Get player info container
         Locator playerInfoContainer = page.locator("div.col12-lg-10.col12-m-10.col12-s-9.col12-xs-8");
         playerInfoContainer.waitFor(new Locator.WaitForOptions().setTimeout(10000));
 
-        // Selector corregido para el nombre del jugador
-        player.setName(extractText(page, "h1.header-name"));
-        player.setCurrentTeam(extractText(page, "div:has(span.info-label:text-is('Equipo Actual:')) > a"));
-
-        // Usamos el contenedor principal para acotar la búsqueda de los demás datos.
-        player.setShirtNumber(extractValueFromInfoDiv(playerInfoContainer, "Número de Dorsal"));
-        String ageText = extractValueFromInfoDiv(playerInfoContainer, "Edad");
-        if (!ageText.equals(NOT_FOUND)) {
-            // Extraer solo el número de la edad, ej: "38" de "38 años (24-06-1987)"
-            player.setAge(ageText.split(" ")[0].trim());
-        } else {
-            player.setAge(ageText);
-        }
-        player.setHeight(extractValueFromInfoDiv(playerInfoContainer, "Altura"));
-        // El nombre de la nacionalidad está en el texto, no en un atributo 'title'
-        player.setNationality(extractText(playerInfoContainer,
-                "div.col12-lg-6:has(span.info-label:text-is('Nacionalidad:')) > span.iconize"));
-
-        // Las posiciones pueden ser múltiples spans, así que los unimos.
-        Locator positionsContainer = playerInfoContainer
-                .locator("div:has(span.info-label:text-is('Posiciones:')) > span:not(.info-label)");
-        if (positionsContainer.isVisible()) {
-            String positions = positionsContainer.locator("span").all().stream()
-                    .map(Locator::innerText)
-                    .collect(Collectors.joining(" "));
-            player.setPositions(positions);
-        } else {
-            player.setPositions(NOT_FOUND);
-        }
+        // Set player basic info
+        player.setName(extractValueFromPlayerInfo(playerInfoContainer, "Nombre"));
+        player.setCurrentTeam(extractValueFromPlayerInfo(playerInfoContainer, "Equipo Actual"));
+        player.setShirtNumber(extractValueFromPlayerInfo(playerInfoContainer, "Número de Dorsal"));
+        player.setAge(extractValueFromPlayerInfo(playerInfoContainer, "Edad").split(" ")[0].trim());
+        player.setHeight(extractValueFromPlayerInfo(playerInfoContainer, "Altura"));
+        player.setNationality(extractValueFromPlayerInfo(playerInfoContainer, "Nacionalidad"));
+        player.setPositions(extractPlayerPositionsFromPlayerInfo(playerInfoContainer));
+        
         return player;
     }
 
-    private String extractValueFromInfoDiv(Locator context, String label) {
+    private String extractValueFromPlayerInfo(Locator context, String label) {
         try {
             // Buscamos el div específico dentro del contexto (playerInfoContainer)
             String selector = String.format("div.col12-lg-6:has(span.info-label:text-is('%s:'))", label);
@@ -107,13 +83,25 @@ public class PlayerService extends AbstractWebService {
         }
     }
 
+    private String extractPlayerPositionsFromPlayerInfo(Locator playerInfoContainer) {
+        Locator positionsContainer = playerInfoContainer
+                .locator("div:has(span.info-label:text-is('Posiciones:')) > span:not(.info-label)");
+        if (positionsContainer.isVisible()) {
+            String positions = positionsContainer.locator("span").all().stream()
+                    .map(Locator::innerText)
+                    .collect(Collectors.joining(" "));
+            return positions;
+        } else {
+            return NOT_FOUND;
+        }
+    }
+
     private List<PlayerMatchStatsDTO> scrapePlayerMatchStats(Page page) {
         List<PlayerMatchStatsDTO> matchStats = new ArrayList<>();
-        Locator statsTableBody = page.locator("#player-table-statistics-body");
-        if (!statsTableBody.isVisible()) {
-            log.warn("Player match statistics table not found.");
-            return matchStats;
-        }
+
+        // Get match statistics table body
+        Locator statsTableBody = page.locator("tbody#player-table-statistics-body");
+        statsTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
 
         List<Locator> matchRows = statsTableBody.locator("tr").all();
         for (Locator row : matchRows) {
