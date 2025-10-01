@@ -27,25 +27,6 @@ FROM eclipse-temurin:21-jdk-jammy
 # Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias, Google Chrome y ChromeDriver en una sola capa para optimizar
-RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    --no-install-recommends && \
-    # Instalar Google Chrome
-    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt-get install -y ./google-chrome-stable_current_amd64.deb && \
-    rm google-chrome-stable_current_amd64.deb && \
-    # Instalar ChromeDriver (versión correspondiente a Chrome)
-    # Chrome 125 -> ChromeDriver 125.0.6422.78
-    wget -q https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.78/linux64/chromedriver-linux64.zip && \
-    unzip chromedriver-linux64.zip && \
-    mv chromedriver-linux64/chromedriver /usr/bin/chromedriver && \
-    chmod +x /usr/bin/chromedriver && \
-    rm chromedriver-linux64.zip && \
-    # Limpiamos la caché de apt al final
-    rm -rf /var/lib/apt/lists/*
-
 # Copiamos el JAR construido desde la fase de 'build'
 COPY --from=build /app/build/libs/*.jar app.jar
 
@@ -53,5 +34,5 @@ COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación
-# Le indicamos a Selenium que no use el sandbox de Chrome, lo cual es necesario en contenedores.
-ENTRYPOINT ["java", "-Dwebdriver.chrome.args=--no-sandbox", "-jar", "app.jar"]
+# Ya no necesitamos el argumento --no-sandbox porque no usamos Chrome.
+ENTRYPOINT ["java", "-jar", "app.jar"]

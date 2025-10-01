@@ -2,204 +2,145 @@ package com.dapp.futbol_api.service;
 
 import com.dapp.futbol_api.model.dto.PlayerDTO;
 import com.dapp.futbol_api.model.dto.PlayerMatchStatsDTO;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.SearchContext;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.LoadState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class PlayerService {
+public class PlayerService extends AbstractWebService {
 
     private static final Logger log = LoggerFactory.getLogger(PlayerService.class);
-    private static final String BASE_URL = "https://es.whoscored.com/";
-    private static final String NOT_FOUND = "Not found";
 
     public PlayerDTO getPlayerInfoByName(String playerName) {
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless=new");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080");
-        options.addArguments(
-                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
+        try (Playwright playwright = Playwright.create()) {
+            Page page = createPage(playwright);
 
-        WebDriver driver = new ChromeDriver(options);
-        try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-            driver.get(BASE_URL);
+            // 2. Search for the player
+            performSearch(page, playerName);
 
-            // 1. Handle cookie banner
+            // 3. Click on the first result
+            // Selector corregido para apuntar a la primera fila de datos (la que contiene
+            // 'td') dentro del contenedor de "Jugadores:".
+            Locator firstResult = page
+                    .locator("div.search-result:has(h2:text('Jugadores:')) >> tbody tr:nth-child(2) >> a")
+                    .first();
             try {
-                wait.until(ExpectedConditions.elementToBeClickable(
-                        By.xpath("//button[text()='Aceptar todo']"))).click();
-                log.info("Cookie banner accepted.");
+                // ¡Solución! Esperar explícitamente a que el resultado sea visible.
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Esperar hasta 15 segundos
             } catch (Exception e) {
-                log.warn("Cookie button not found or could not be clicked. Continuing...");
+                log.error("Player '{}' not found in search results or timed out.", playerName);
+                throw new IllegalArgumentException("Player with name '" + playerName + "' not found.");
             }
-
-            // 2. Search for the player in the search bar
-            log.info("Searching for player: {}", playerName);
-            WebElement searchBox = wait.until(
-                    ExpectedConditions.visibilityOfElementLocated(
-                            By.cssSelector("input[placeholder='Buscar campeonatos, equipos y jugadores']")));
-            searchBox.sendKeys(playerName);
-            searchBox.sendKeys(Keys.ENTER);
-
-            // 3. Wait for results and click the first one
-            log.info("Waiting for search results...");
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='search-result']")));
-            log.info("Results found. Clicking on the first player.");
-            WebElement firstResult = wait.until(
-                    ExpectedConditions.elementToBeClickable(
-                            By.xpath("//div[@class='search-result']/table/tbody/tr[2]/td[1]/a")));
             firstResult.click();
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED);
 
-            // 4. Wait for the player page to load and extract data
-            wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//div[@class='header']")));
-            log.info("Player page loaded. Extracting data...");
+            // 4. Scrape player data
+            PlayerDTO playerDTO = scrapePlayerData(page);
 
-            WebElement headerContainer = driver.findElement(By.xpath("//div[@class='header']"));
-            PlayerDTO playerDTO = scrapePlayerData(headerContainer);
+            // 5. Navigate to Match Statistics and scrape data
+            page.locator("//a[text()='Estadísticas del Partido']").click();
+            page.waitForLoadState(LoadState.DOMCONTENTLOADED);
+            playerDTO.setMatchStats(scrapePlayerMatchStats(page));
 
-            // 5. Navigate to the "Match Statistics" tab
-            log.info("Navigating to 'Match Statistics' tab...");
-            try {
-                WebElement statsLink = wait.until(ExpectedConditions.elementToBeClickable(
-                        By.xpath("//div[@id='sub-navigation']//a[text()='Estadísticas del Partido']")));
-                statsLink.click();
-
-                // 6. Wait for the statistics table to load and extract data
-                wait.until(ExpectedConditions.presenceOfElementLocated(By.id("statistics-table-summary-matches")));
-                log.info("Statistics page loaded. Extracting match data...");
-                playerDTO.setMatchStats(scrapePlayerMatchStats(driver));
-            } catch (Exception e) {
-                log.error("Could not navigate to or extract match statistics.", e);
-            }
             return playerDTO;
-        } finally {
-            if (driver != null) {
-                driver.quit();
-            }
+        } catch (Exception e) {
+            log.error("An error occurred during scraping for player: {}", playerName, e);
+            throw new RuntimeException("Failed to fetch data from whoscored.com", e);
         }
     }
 
-    public PlayerDTO scrapePlayerData(WebElement headerContainer) {
+    public PlayerDTO scrapePlayerData(Page page) {
         PlayerDTO player = new PlayerDTO();
 
-        // The main search context will be the 'header' div
-        player.setName(extractText(headerContainer, By.xpath(".//h1[@class='header-name']")));
+        // ¡Solución! Esperar a que el contenedor principal de la información del
+        // jugador esté visible.
+        Locator playerInfoContainer = page.locator("div.col12-lg-10.col12-m-10.col12-s-9.col12-xs-8");
+        playerInfoContainer.waitFor(new Locator.WaitForOptions().setTimeout(10000));
 
-        // The rest of the information is in a sub-container.
-        WebElement infoContainer = headerContainer.findElement(By.xpath(".//div[contains(@class, 'col12-lg-10')]"));
+        // Selector corregido para el nombre del jugador
+        player.setName(extractText(page, "h1.header-name"));
+        player.setCurrentTeam(extractText(page, "div:has(span.info-label:text-is('Equipo Actual:')) > a"));
 
-        // Current Team (it's a link, special case)
-        player.setCurrentTeam(
-                extractText(infoContainer, By.xpath(".//span[contains(text(),'Equipo Actual')]/following-sibling::a")));
-
-        // Shirt Number
-        player.setShirtNumber(extractValueFromInfoDiv(infoContainer, "Número de Dorsal"));
-
-        // Age
-        String ageText = extractValueFromInfoDiv(infoContainer, "Edad");
+        // Usamos el contenedor principal para acotar la búsqueda de los demás datos.
+        player.setShirtNumber(extractValueFromInfoDiv(playerInfoContainer, "Número de Dorsal"));
+        String ageText = extractValueFromInfoDiv(playerInfoContainer, "Edad");
         if (!ageText.equals(NOT_FOUND)) {
-            player.setAge(ageText.split(" ")[0]);
+            // Extraer solo el número de la edad, ej: "38" de "38 años (24-06-1987)"
+            player.setAge(ageText.split(" ")[0].trim());
         } else {
             player.setAge(ageText);
         }
+        player.setHeight(extractValueFromInfoDiv(playerInfoContainer, "Altura"));
+        // El nombre de la nacionalidad está en el texto, no en un atributo 'title'
+        player.setNationality(extractText(playerInfoContainer,
+                "div.col12-lg-6:has(span.info-label:text-is('Nacionalidad:')) > span.iconize"));
 
-        // Height
-        player.setHeight(extractValueFromInfoDiv(infoContainer, "Altura"));
-
-        player.setNationality(extractText(infoContainer,
-                By.xpath(".//span[contains(text(),'Nacionalidad')]/following-sibling::span")));
-
-        // Positions
-        List<WebElement> positionElements = infoContainer
-                .findElements(By.xpath(".//span[contains(text(),'Posiciones')]/following-sibling::span/span"));
-        String positions = positionElements.stream()
-                .map(WebElement::getText)
-                .collect(Collectors.joining(" "));
-        player.setPositions(positions.isEmpty() ? "Not found" : positions);
+        // Las posiciones pueden ser múltiples spans, así que los unimos.
+        Locator positionsContainer = playerInfoContainer
+                .locator("div:has(span.info-label:text-is('Posiciones:')) > span:not(.info-label)");
+        if (positionsContainer.isVisible()) {
+            String positions = positionsContainer.locator("span").all().stream()
+                    .map(Locator::innerText)
+                    .collect(Collectors.joining(" "));
+            player.setPositions(positions);
+        } else {
+            player.setPositions(NOT_FOUND);
+        }
         return player;
     }
 
-    private String extractText(SearchContext context, By locator) {
+    private String extractValueFromInfoDiv(Locator context, String label) {
         try {
-            return context.findElement(locator).getText();
-        } catch (Exception e) {
-            log.warn("Could not find element with locator: {}", locator);
-            return "Not found";
-        }
-    }
-
-    /**
-     * Extracts the value from an information div that follows the "Label: Value"
-     * pattern.
-     * 
-     * @param infoContainer The WebElement containing the information divs.
-     * @param label         The text label to search for (e.g., "Height").
-     * @return The extracted value as a String, or "Not found".
-     */
-    private String extractValueFromInfoDiv(WebElement infoContainer, String label) {
-        String fullText = extractText(infoContainer, By.xpath(".//span[contains(text(),'" + label + "')]/parent::div"));
-        if (!fullText.equals(NOT_FOUND)) {
+            // Buscamos el div específico dentro del contexto (playerInfoContainer)
+            String selector = String.format("div.col12-lg-6:has(span.info-label:text-is('%s:'))", label);
+            String fullText = context.locator(selector).first().innerText();
             return fullText.replace(label + ":", "").trim();
+        } catch (Exception e) {
+            log.warn("Could not extract value for label '{}'", label);
+            return NOT_FOUND;
         }
-        return fullText;
     }
 
-    private List<PlayerMatchStatsDTO> scrapePlayerMatchStats(WebDriver driver) {
+    private List<PlayerMatchStatsDTO> scrapePlayerMatchStats(Page page) {
         List<PlayerMatchStatsDTO> matchStats = new ArrayList<>();
-        try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-            WebElement statsTableBody = wait
-                    .until(ExpectedConditions.presenceOfElementLocated(By.id("player-table-statistics-body")));
-            List<WebElement> matchRows = statsTableBody.findElements(By.tagName("tr"));
+        Locator statsTableBody = page.locator("#player-table-statistics-body");
+        if (!statsTableBody.isVisible()) {
+            log.warn("Player match statistics table not found.");
+            return matchStats;
+        }
 
-            for (WebElement row : matchRows) {
-                List<WebElement> cells = row.findElements(By.tagName("td"));
-                if (cells.size() < 13)
-                    continue; // Skip malformed rows
+        List<Locator> matchRows = statsTableBody.locator("tr").all();
+        for (Locator row : matchRows) {
+            // Selector para el enlace que contiene tanto el oponente como el resultado.
+            Locator opponentLink = row.locator("td:nth-child(1) a.player-match-link");
+            String fullOpponentText = opponentLink.innerText();
+            String score = opponentLink.locator("span.scoreline").innerText();
+            String opponent = fullOpponentText.replace(score, "").trim();
 
-                WebElement opponentCell = cells.get(0).findElement(By.tagName("a"));
-                String fullOpponentText = opponentCell.getText();
-                String score = extractText(opponentCell, By.cssSelector("span.scoreline"));
-                String opponent = fullOpponentText.replace(score, "").trim();
-
-                PlayerMatchStatsDTO match = PlayerMatchStatsDTO.builder()
-                        .opponent(opponent)
-                        .score(score)
-                        .date(cells.get(2).getText())
-                        .position(cells.get(3).getText())
-                        .minsPlayed(cells.get(4).getText())
-                        .goals(cells.get(5).getText())
-                        .assists(cells.get(6).getText())
-                        .yellowCards(cells.get(7).getText())
-                        .redCards(cells.get(8).getText())
-                        .shots(cells.get(9).getText())
-                        .passSuccess(cells.get(10).getText())
-                        .aerialsWon(cells.get(11).getText())
-                        .rating(cells.get(12).getText())
-                        .build();
-                matchStats.add(match);
-            }
-        } catch (Exception e) {
-            log.error("Error extracting player match statistics.", e);
+            PlayerMatchStatsDTO match = PlayerMatchStatsDTO.builder()
+                    .opponent(opponent)
+                    .score(score)
+                    .date(row.locator("td:nth-child(3)").innerText())
+                    .position(row.locator("td:nth-child(4)").innerText())
+                    .minsPlayed(row.locator("td:nth-child(5)").innerText())
+                    .goals(row.locator("td:nth-child(6)").innerText())
+                    .assists(row.locator("td:nth-child(7)").innerText())
+                    .yellowCards(row.locator("td:nth-child(8)").innerText())
+                    .redCards(row.locator("td:nth-child(9)").innerText())
+                    .shots(row.locator("td:nth-child(10)").innerText())
+                    .passSuccess(row.locator("td:nth-child(11)").innerText())
+                    .aerialsWon(row.locator("td:nth-child(12)").innerText())
+                    .rating(row.locator("td:nth-child(13)").innerText())
+                    .build();
+            matchStats.add(match);
         }
         return matchStats;
     }
+
 }
