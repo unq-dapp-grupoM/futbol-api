@@ -21,7 +21,7 @@ services:
     envVars:
       # Referencia correcta al Secreto de Render (asumiendo que 'API_KEY' existe en tu Dashboard)
       - key: API_KEY
-        value: ${{ secret.API_KEY }}
+        value: ${{ secret.API_SECURITY_KEY }}
 
       - key: SPRING_PROFILES_ACTIVE
         value: production
