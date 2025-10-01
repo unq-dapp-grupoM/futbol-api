@@ -1,5 +1,6 @@
 # render.yaml
 # Documentación: https://render.com/docs/blueprint-spec
+version: "1"
 
 registries:
   # Define una credencial para acceder a GitHub Container Registry (ghcr.io)
@@ -8,23 +9,20 @@ registries:
     github: true # Indica a Render que use la cuenta de GitHub conectada
 
 services:
-  # Un servicio web para la API de fútbol
-  - type: web
-    name: futbol-api
-    # El repositorio de origen. Es buena práctica incluirlo.
-    repo: https://github.com/unq-dapp-grupoM/futbol-api
-    # Entorno de ejecución: Imagen Docker pre-construida
-    env: image
-    # Especifica el plan gratuito para evitar cargos y la necesidad de una tarjeta de crédito.
-    plan: free
-    # URL de la imagen en GitHub Container Registry
+  - name: futbol-api # Un servicio web para la API de fútbol
+    type: web
+    env: image # Entorno de ejecución: Imagen Docker pre-construida
+    plan: free # Especifica el plan gratuito para evitar cargos
+    repo: https://github.com/unq-dapp-grupoM/futbol-api # El repositorio de origen
+    healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista
     image:
-      url: ghcr.io/unq-dapp-grupom/futbol-api:main
+      url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
     registryCredential:
-      name: github-cr # Referencia a la credencial definida arriba
-    # Configuración de salud para que Render sepa si tu app está lista
-    healthCheckPath: /actuator/health # Asegúrate de tener Spring Boot Actuator
-    # Variables de entorno (si las necesitas)
-    envVars:
+      name: github-cr # Referencia a la credencial definida en la sección 'registries'
+    envVars: # Variables de entorno
       - key: SERVER_PORT
-        value: 8080 # Render espera que el servicio escuche en el puerto 8080 por defecto
+        value: 10000 # Render asigna el puerto dinámicamente, pero es buena práctica definirlo.
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: API_KEY # Ejemplo de variable de entorno secreta
+        fromSecret: true # El valor se tomará de los Secretos de Render
