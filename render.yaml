@@ -7,6 +7,8 @@ services:
     name: futbol-api
     # Entorno de ejecución: Imagen Docker pre-construida
     env: image
+    # Especifica el plan gratuito para evitar cargos y la necesidad de una tarjeta de crédito.
+    plan: free
     # URL de la imagen en GitHub Container Registry
     # Reemplaza 'TU_USUARIO_DE_GITHUB/futbol-api' con tu usuario y nombre de repo
     image:
