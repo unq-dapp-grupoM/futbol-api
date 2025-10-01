@@ -61,6 +61,11 @@ sonar {
   }
 }
 
+bootJar {
+	mainClass = 'com.dapp.futbol_api.FutbolApiApplication' // Asegúrate de que esta sea la ruta correcta a tu clase principal
+}
+
+
 jacocoTestReport {
     reports {
         xml.required = true

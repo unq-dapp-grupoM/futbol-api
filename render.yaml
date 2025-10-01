@@ -1,6 +1,12 @@
 # render.yaml
 # Documentación: https://render.com/docs/blueprint-spec
 
+registries:
+  # Define una credencial para acceder a GitHub Container Registry (ghcr.io)
+  - name: github-cr # Un nombre para esta credencial
+    url: ghcr.io
+    github: true # Indica a Render que use la cuenta de GitHub conectada
+
 services:
   # Un servicio web para la API de fútbol
   - type: web
@@ -13,11 +19,8 @@ services:
     # Reemplaza 'TU_USUARIO_DE_GITHUB/futbol-api' con tu usuario y nombre de repo
     image:
       url: ghcr.io/unq-dapp-grupom/futbol-api:main
-    # Credenciales para acceder al registro de imágenes de GitHub (ghcr.io)
-    # Esto le dice a Render que use la cuenta de GitHub conectada para obtener la imagen.
     registryCredential:
-      name: github # El nombre de la credencial para ghcr.io
-      repository: unq-dapp-grupom/futbol-api # Tu repositorio
+      name: github-cr # Referencia a la credencial definida arriba
     # Configuración de salud para que Render sepa si tu app está lista
     healthCheckPath: /actuator/health # Asegúrate de tener Spring Boot Actuator
     # Variables de entorno (si las necesitas)
