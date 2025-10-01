@@ -29,7 +29,7 @@ public class PlayerService extends AbstractWebService {
                     .locator("div.search-result:has(h2:text('Jugadores:')) >> tbody tr:nth-child(2) >> a")
                     .first();
             try {
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Esperar hasta 15 segundos
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000));
             } catch (Exception e) {
                 log.error("Player '{}' not found in search results or timed out.", playerName);
                 throw new IllegalArgumentException("Player with name '" + playerName + "' not found.");
@@ -67,13 +67,12 @@ public class PlayerService extends AbstractWebService {
         player.setHeight(extractValueFromPlayerInfo(playerInfoContainer, "Altura"));
         player.setNationality(extractValueFromPlayerInfo(playerInfoContainer, "Nacionalidad"));
         player.setPositions(extractPlayerPositionsFromPlayerInfo(playerInfoContainer));
-        
+
         return player;
     }
 
     private String extractValueFromPlayerInfo(Locator context, String label) {
         try {
-            // Buscamos el div específico dentro del contexto (playerInfoContainer)
             String selector = String.format("div.col12-lg-6:has(span.info-label:text-is('%s:'))", label);
             String fullText = context.locator(selector).first().innerText();
             return fullText.replace(label + ":", "").trim();
@@ -105,7 +104,6 @@ public class PlayerService extends AbstractWebService {
 
         List<Locator> matchRows = statsTableBody.locator("tr").all();
         for (Locator row : matchRows) {
-            // Selector para el enlace que contiene tanto el oponente como el resultado.
             Locator opponentLink = row.locator("td:nth-child(1) a.player-match-link");
             String fullOpponentText = opponentLink.innerText();
             String score = opponentLink.locator("span.scoreline").innerText();

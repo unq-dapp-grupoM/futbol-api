@@ -20,9 +20,8 @@ public class TeamService extends AbstractWebService {
     private static final Logger log = LoggerFactory.getLogger(TeamService.class);
 
     public TeamDTO getTeamInfoByName(String teamName) {
-        try (Playwright playwright = Playwright.create()) {
-            Page page = createPage(playwright);
-
+        try (Playwright playwright = Playwright.create()) { // Bean of Spring
+            Page page = createPage(playwright); // Injected into Service
             // Search for the team
             performSearch(page, teamName);
 
@@ -33,7 +32,6 @@ public class TeamService extends AbstractWebService {
             try {
                 firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Esperar hasta 15 segundos
             } catch (Exception e) {
-                // Si no está en el segundo, buscar en el primero como fallback
                 log.warn("Team '{}' not found in the second result block, trying the first one.", teamName);
                 firstResult = page
                         .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(1) >> a")
