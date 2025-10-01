@@ -1,30 +1,21 @@
-# render.yaml
-# Documentación: https://render.com/docs/blueprint-spec
-# Esta línea es crucial para que Render interprete correctamente el archivo.
 version: "1"
 
-registries:
-  # Define una credencial para acceder a GitHub Container Registry (ghcr.io)
-  - name: github-cr # Nombre que le damos a nuestra credencial de ghcr.io
-    url: ghcr.io
-    github: true # Indica a Render que use la cuenta de GitHub conectada
-
 services:
-  # Define el servicio web que se desplegará.
   - name: futbol-api
     type: web
-    plan: free # Usa el plan gratuito para evitar cargos.
-    env: image # Indica a Render que use una imagen de Docker pre-construida.
-    repo: https://github.com/unq-dapp-grupoM/futbol-api # Repositorio de origen (buena práctica).
-    # Desactiva el auto-despliegue de Render, ya que lo controlaremos con el Deploy Hook desde GitHub Actions.
-    autoDeploy: false
-    image:
-      url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
-    registryCredential:
-      name: github-cr # Usa las credenciales 'github-cr' definidas arriba.
+    # Indica a Render que use la instancia gratuita (free plan)
+    plan: free 
+    image: 
+      url: ghcr.io/unq-dapp-grupom/futbol-api:main
+
     healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
+    
+    # Se recomienda dejar autodeploy: true si quieres CD
+    autoDeploy: true 
+    
     envVars:
       - key: API_KEY
-        fromSecret: true # Indica que el valor de API_KEY se tomará de los "Secret Files" de Render.
+        fromSecret: true
+      
       - key: SPRING_PROFILES_ACTIVE
-        value: production # Activa el perfil de producción de Spring.
+        value: production
