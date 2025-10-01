@@ -13,6 +13,11 @@ services:
     # Reemplaza 'TU_USUARIO_DE_GITHUB/futbol-api' con tu usuario y nombre de repo
     image:
       url: ghcr.io/unq-dapp-grupom/futbol-api:main
+    # Credenciales para acceder al registro de imágenes de GitHub (ghcr.io)
+    # Esto le dice a Render que use la cuenta de GitHub conectada para obtener la imagen.
+    registryCredential:
+      name: github # El nombre de la credencial para ghcr.io
+      repository: unq-dapp-grupom/futbol-api # Tu repositorio
     # Configuración de salud para que Render sepa si tu app está lista
     healthCheckPath: /actuator/health # Asegúrate de tener Spring Boot Actuator
     # Variables de entorno (si las necesitas)
