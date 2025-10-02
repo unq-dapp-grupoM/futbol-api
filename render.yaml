@@ -1,27 +1,28 @@
+# Esta línea es crucial para que Render interprete correctamente el archivo.
 version: "1"
 
+registries:
+  # Define una credencial para acceder a GitHub Container Registry (ghcr.io)
+  - name: github-cr # Nombre que le damos a nuestra credencial de ghcr.io
+    url: ghcr.io
+    github: true # Indica a Render que use la cuenta de GitHub conectada
+
 services:
+  # Define el servicio web que se desplegará.
   - name: futbol-api
     type: web
     plan: free
-    
-    # Configuración para la imagen Docker preconstruida en GHCR
+    env: image # Indica a Render que use una imagen de Docker pre-construida.
+    repo: https://github.com/unq-dapp-grupoM/futbol-api # Repositorio de origen (buena práctica).
+    # Desactiva el auto-despliegue de Render, ya que lo controlaremos con el Deploy Hook desde GitHub Actions.
+    autoDeploy: false
     image:
-      url: ghcr.io/unq-dapp-grupom/futbol-api:main 
-
-    startCommand: "java -jar app.jar" 
-
-    # Render asume que tu aplicación está lista cuando esta ruta responde 200 OK.
-    healthCheckPath: /actuator/health 
-    
-    # Permite que Render se re-despliegue automáticamente con cada nuevo commit que 
-    # tu GitHub Action suba a GHCR.
-    autoDeploy: true
-
+      url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
+    registryCredential:
+      name: github-cr # Usa las credenciales 'github-cr' definidas arriba.
+    healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
     envVars:
-      # Referencia correcta al Secreto de Render (asumiendo que 'API_KEY' existe en tu Dashboard)
       - key: API_KEY
-        value: ${{ secret.API_SECURITY_KEY }}
-
+        fromSecret: true # Indica que el valor de API_KEY se tomará de los "Secret Files" de Render.
       - key: SPRING_PROFILES_ACTIVE
         value: production
