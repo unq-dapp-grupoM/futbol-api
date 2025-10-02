@@ -77,17 +77,31 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: . 
           push: true
           # Usa las etiquetas generadas por el paso anterior
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  trigger-render-deploy:
-    name: Trigger Render Deploy
+  deploy-to-render:
+    name: Deploy to Render
     runs-on: ubuntu-latest
     # Este job depende de que la imagen se haya subido correctamente
     needs: build-and-push-image
+    permissions:
+      # Necesario para crear un "GitHub deployment" y ver el estado en la UI de GitHub
+      deployments: write
     steps:
-      - name: Trigger Render deployment hook
-        run: curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+      - name: Deploy to Render
+        uses: JorgeLNJunior/render-deploy@v1.4.5
+        with:
+          # El ID de tu servicio en Render
+          service_id: ${{ secrets.RENDER_SERVICE_ID }}
+          # Tu API Key de Render
+          api_key: ${{ secrets.RENDER_API_KEY }}
+          # Espera a que el despliegue finalice
+          wait_deploy: true
+          # Crea un "GitHub Deployment" para visualizar el estado
+          github_deployment: true
+          deployment_environment: 'production'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
