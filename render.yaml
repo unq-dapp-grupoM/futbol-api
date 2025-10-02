@@ -1,20 +1,27 @@
 # Esta línea es crucial para que Render interprete correctamente el archivo.
 version: "1"
 
+envVarGroups:
+  # Define un grupo para las variables de entorno de la aplicación.
+  # Es la forma recomendada de gestionar secretos.
+  - name: futbol-api-secrets
+    envVars:
+      - key: API_KEY
+        fromSecret: true # Indica que el valor se tomará de un "Secret File" con la clave API_KEY.
+      - key: SPRING_PROFILES_ACTIVE
+        value: production # Activa el perfil de producción de Spring.
+
 services:
   # Define el servicio web que se desplegará.
   - name: futbol-api
     type: web
     plan: free # Usa el plan gratuito para evitar cargos.
     env: image # Indica a Render que use una imagen de Docker pre-construida.
-    repo: https://github.com/unq-dapp-grupoM/futbol-api # Repositorio de origen (buena práctica).
     # Desactiva el auto-despliegue de Render, ya que lo controlaremos con el Deploy Hook desde GitHub Actions.
     autoDeploy: false
     image:
       url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
     healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
+    # Enlaza el grupo de variables de entorno definido arriba con este servicio.
     envVars:
-      - key: API_KEY
-        fromSecret: true # Indica que el valor de API_KEY se tomará de los "Secret Files" de Render.
-      - key: SPRING_PROFILES_ACTIVE
-        value: production
+      - fromGroup: futbol-api-secrets
