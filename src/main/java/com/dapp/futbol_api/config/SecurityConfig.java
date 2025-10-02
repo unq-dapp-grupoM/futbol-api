@@ -22,6 +22,7 @@ public class SecurityConfig {
         private final ApiKeyAuthFilter apiKeyAuthFilter;
 
         private static final String[] WHITE_LIST_URLS = {
+                        "/",
                         "/api/auth/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
