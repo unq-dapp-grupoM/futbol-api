@@ -5,17 +5,13 @@ services:
   # Define el servicio web que se desplegará.
   - name: futbol-api
     type: web
-    plan: free
+    plan: free # Usa el plan gratuito para evitar cargos.
     env: image # Indica a Render que use una imagen de Docker pre-construida.
     repo: https://github.com/unq-dapp-grupoM/futbol-api # Repositorio de origen (buena práctica).
     # Desactiva el auto-despliegue de Render, ya que lo controlaremos con el Deploy Hook desde GitHub Actions.
     autoDeploy: false
     image:
       url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
-    # Define las credenciales para acceder al registro de Docker directamente en el servicio.
-    registryCredential:
-      name: github-cr # Un nombre descriptivo para la credencial.
-      username: ${{ github.actor }} # El actor de GitHub que sube la imagen.
     healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
     envVars:
       - key: API_KEY
