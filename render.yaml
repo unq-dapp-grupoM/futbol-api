@@ -7,18 +7,10 @@ services:
     type: web
     plan: free # Usa el plan gratuito para evitar cargos.
     env: image # Indica a Render que use una imagen de Docker pre-construida.
-    autoDeploy: false
+    autoDeploy: false # Desactiva el auto-despliegue, lo controlamos con el Deploy Hook.
     image:
       url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
     healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: production # Activa el perfil de producción de Spring.
-      # Inyectamos las credenciales para el registro de Docker como variables de entorno.
-      # Render las usará para autenticarse en ghcr.io.
-      - key: DOCKER_REGISTRY
-        value: ghcr.io
-      - key: DOCKER_USERNAME
-        value: ${{ github.actor }} # El usuario de GitHub que ejecuta el pipeline.
-      - key: DOCKER_PASSWORD
-        fromSecret: true # El valor se tomará del secreto GITHUB_TOKEN.
