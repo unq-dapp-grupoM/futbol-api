@@ -67,12 +67,17 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name to lowercase
+        id: lowercaserepo
+        run: echo "IMAGE_NAME_LC=ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_ENV
  
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          # Usa la variable de entorno con el nombre en minúsculas.
+          images: ${{ env.IMAGE_NAME_LC }}
  
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

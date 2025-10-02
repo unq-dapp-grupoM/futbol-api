@@ -1,6 +1,12 @@
 # Esta línea es crucial para que Render interprete correctamente el archivo.
 version: "1"
 
+registries:
+  # Define una credencial para acceder a GitHub Container Registry (ghcr.io)
+  - name: github-cr # Nombre que le damos a nuestra credencial de ghcr.io
+    url: ghcr.io
+    github: true # Indica a Render que use la cuenta de GitHub conectada
+
 services:
   # Define el servicio web que se desplegará.
   - name: futbol-api
@@ -11,6 +17,8 @@ services:
     autoDeploy: false
     image:
       url: ghcr.io/unq-dapp-grupom/futbol-api:main # URL de la imagen en GitHub Container Registry
+    registryCredential:
+      name: github-cr # Usa las credenciales 'github-cr' definidas arriba.
     healthCheckPath: /actuator/health # Ruta para que Render sepa si tu app está lista.
     # Las variables de entorno se gestionarán directamente en el Dashboard de Render.
     # Esto evita problemas de validación con los secretos en el blueprint.
