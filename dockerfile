@@ -1,38 +1,62 @@
 # --- Fase de Construcción (Build Stage) ---
-# Usamos una imagen de Gradle con Java 21 para compilar el proyecto.
 FROM gradle:8.8-jdk21-jammy AS build
 
-# Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Copiamos los archivos de configuración de Gradle y el wrapper
+# Copiamos archivos de configuración primero
 COPY build.gradle settings.gradle gradlew ./
 COPY gradle ./gradle
-
-# Damos permisos de ejecución al script de Gradle antes de usarlo
 RUN chmod +x gradlew
 
-# Usamos 'build' para descargar dependencias y generar la caché.
-# El '|| true' al final asegura que el build no falle si hay tests que no pasan (ya que no hemos copiado el código fuente aún).
+# Descargamos dependencias (sin código aún, para cache)
 RUN ./gradlew build -x test --no-daemon --stacktrace || true
 
-# Copiamos el resto del código fuente y construimos el JAR
+# Copiamos el código fuente
 COPY src ./src
+
+# Construimos el JAR
 RUN ./gradlew build -x test --no-daemon
 
-# --- Fase Final (Final Stage) ---
-# Usamos una imagen base de Debian con Java 21.
+# --- Fase Final (Runtime Stage) ---
 FROM eclipse-temurin:21-jdk-jammy
 
-# Establecemos el directorio de trabajo
 WORKDIR /app
 
-# Copiamos el JAR construido desde la fase de 'build'
+# Instalamos dependencias necesarias para Chromium
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
+    libnss3 \
+    libx11-6 \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxi6 \
+    libxtst6 \
+    libglib2.0-0 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdrm2 \
+    libgbm1 \
+    libpango-1.0-0 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalamos Playwright y navegadores
+RUN wget https://github.com/microsoft/playwright-java/releases/download/v1.49.0/playwright-java-1.49.0.zip -O playwright.zip \
+    && unzip playwright.zip -d /opt/playwright \
+    && rm playwright.zip \
+    && /opt/playwright/playwright install --with-deps
+
+# Copiamos el JAR desde la fase de build
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Exponemos el puerto en el que corre la aplicación Spring Boot (por defecto 8080)
+# Exponemos el puerto
 EXPOSE 8080
 
-# Comando para ejecutar la aplicación
-# Ya no necesitamos el argumento --no-sandbox porque no usamos Chrome.
+# Ejecutamos Spring Boot
 ENTRYPOINT ["java", "-jar", "app.jar"]
