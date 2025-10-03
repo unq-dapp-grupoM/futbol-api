@@ -25,7 +25,11 @@ public abstract class AbstractWebService {
         Browser browser = playwright.chromium()
                 .launch(new BrowserType.LaunchOptions()
                         .setHeadless(true) // Run in headless mode
-                        .setArgs(List.of("--disable-blink-features=AutomationControlled"))); // Hide automation
+                        .setArgs(List.of(
+                                "--no-sandbox", // Necessary for Render
+                                "--disable-setuid-sandbox", // Necessary for Render
+                                "--disable-blink-features=AutomationControlled" // Hide automation
+                        ))); // Hide automation
 
         // Create a browser context with options that simulate a real user.
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
