@@ -46,14 +46,11 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalamos Playwright y navegadores
-RUN wget https://github.com/microsoft/playwright-java/releases/download/v1.49.0/playwright-java-1.49.0.zip -O playwright.zip \
-    && unzip playwright.zip -d /opt/playwright \
-    && rm playwright.zip \
-    && /opt/playwright/playwright install --with-deps
-
 # Copiamos el JAR desde la fase de build
 COPY --from=build /app/build/libs/*.jar app.jar
+
+# Instalamos navegadores Playwright usando la CLI incluida en el JAR
+RUN java -cp app.jar com.microsoft.playwright.CLI install --with-deps
 
 # Exponemos el puerto
 EXPOSE 8080
