@@ -45,9 +45,11 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 // El filtro de API Key se ejecuta primero
-                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                                // Luego el filtro de JWT
-                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class) // Se
+                                                                                                               // ejecuta
+                                                                                                               // primero
+                                // Luego, el filtro de JWT se ejecuta después del de API Key
+                                .addFilterAfter(jwtAuthFilter, ApiKeyAuthFilter.class);
 
                 return http.build();
         }
