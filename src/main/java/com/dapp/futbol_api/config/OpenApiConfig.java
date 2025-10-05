@@ -12,4 +12,6 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 })
 @SecurityScheme(name = "bearerAuth", description = "JWT auth", scheme = "bearer", type = SecuritySchemeType.HTTP, bearerFormat = "JWT", in = SecuritySchemeIn.HEADER)
 public class OpenApiConfig {
+    // Private constructor to prevent instantiation of this utility class.
+    private OpenApiConfig() {}
 }
