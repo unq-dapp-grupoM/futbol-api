@@ -1,6 +1,7 @@
 package com.dapp.futbol_api.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -67,18 +68,12 @@ public class JwtService {
      * @return True if the token is valid, false otherwise.
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
-    }
-
-    /**
-     * Checks if a token is expired.
-     * 
-     * @param token The token to check.
-     * @return True if the token is expired, false otherwise.
-     */
-    private boolean isTokenExpired(String token) {
-        return extractClaim(token, Claims::getExpiration).before(new Date());
+        try {
+            final String username = extractUsername(token);
+            return username.equals(userDetails.getUsername());
+        } catch (ExpiredJwtException e) {
+            return false;
+        }
     }
 
     /**
