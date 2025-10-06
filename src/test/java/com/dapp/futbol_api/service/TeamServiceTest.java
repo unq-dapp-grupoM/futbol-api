@@ -1,6 +1,5 @@
 package com.dapp.futbol_api.service;
 
-import com.dapp.futbol_api.model.dto.TeamDTO;
 import com.dapp.futbol_api.model.dto.TeamPlayerDTO;
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.*;
