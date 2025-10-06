@@ -36,7 +36,8 @@ public class TeamService extends AbstractWebService {
                 firstResult = page
                         .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(1) >> a")
                         .first();
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+                // If it also fails here, it means the team was not found.
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000)); 
             }
 
             firstResult.click();
@@ -48,9 +49,13 @@ public class TeamService extends AbstractWebService {
             teamDTO.setSquad(scrapeSquadData(page));
 
             return teamDTO;
+        } catch (com.microsoft.playwright.TimeoutError e) {
+            log.error("Team '{}' not found in search results or timed out.", teamName, e);
+            throw new IllegalArgumentException("Team with name '" + teamName + "' not found.");
         } catch (Exception e) {
             log.error("An error occurred during scraping for team: {}", teamName, e);
-            throw new RuntimeException("Failed to fetch data from whoscored.com", e);
+            // For other unexpected errors, throw a generic RuntimeException.
+            throw new RuntimeException("An unexpected error occurred while fetching team data.", e);
         }
     }
 

@@ -74,11 +74,11 @@ public class TeamServiceTest {
         });
 
         // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
             teamService.getTeamInfoByName("Unknown Team");
         });
 
-        assertTrue(exception.getMessage().contains("Failed to fetch data from whoscored.com"));
+        assertEquals("Team with name 'Unknown Team' not found.", exception.getMessage());
     }
 
     @Test
