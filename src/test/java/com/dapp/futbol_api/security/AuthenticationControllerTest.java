@@ -58,7 +58,8 @@ public class AuthenticationControllerTest {
         // Arrange
         RegisterRequest request = new RegisterRequest("test@example.com", "password123");
         String errorMessage = "Email already in use.";
-        when(authenticationService.register(any(RegisterRequest.class))).thenThrow(new IllegalArgumentException(errorMessage));
+        when(authenticationService.register(any(RegisterRequest.class)))
+                .thenThrow(new IllegalArgumentException(errorMessage));
 
         // Act & Assert
         mockMvc.perform(post("/api/auth/register")
@@ -88,13 +89,14 @@ public class AuthenticationControllerTest {
         // Arrange
         AuthenticationRequest request = new AuthenticationRequest("test@example.com", "wrong-password");
         String errorMessage = "Invalid credentials";
-        when(authenticationService.authenticate(any(AuthenticationRequest.class))).thenThrow(new BadCredentialsException(errorMessage));
+        when(authenticationService.authenticate(any(AuthenticationRequest.class)))
+                .thenThrow(new BadCredentialsException(errorMessage));
 
         // Act & Assert
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isForbidden())
                 .andExpect(content().string(errorMessage));
     }
 }

@@ -10,7 +10,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AbstractWebServiceTest {
 
     // A concrete implementation of the abstract class for testing purposes
-    static class TestableWebService extends AbstractWebService {}
+    static class TestableWebService extends AbstractWebService {
+    }
 
     private TestableWebService webService;
     private static Playwright playwright;
@@ -34,6 +35,8 @@ public class AbstractWebServiceTest {
         webService = new TestableWebService();
         context = browser.newContext();
         page = context.newPage();
+
+        page.setContent("<a id='test-link'>Click me</a>");
     }
 
     @AfterEach
@@ -43,11 +46,12 @@ public class AbstractWebServiceTest {
 
     @Test
     void testCreatePageShouldAcceptCookiesWhenPresent() {
-        // Arrange: Intercept the navigation to the base URL and provide mock HTML with a cookie button
+        // Arrange: Intercept the navigation to the base URL and provide mock HTML with
+        // a cookie button
         context.route(AbstractWebService.BASE_URL, route -> {
             route.fulfill(new Route.FulfillOptions()
-                .setContentType("text/html")
-                .setBody("<html><body><button>Aceptar todo</button></body></html>"));
+                    .setContentType("text/html")
+                    .setBody("<html><body><button>Aceptar todo</button></body></html>"));
         });
 
         // Act: We need to create a new page within a new context for this specific test
@@ -55,8 +59,10 @@ public class AbstractWebServiceTest {
             Page testPage = webService.createPage(testPlaywright);
 
             // Assert: Check if the page content is loaded (the cookie button is gone)
-            // The click action removes the button in this simple mock, so we check it's not visible.
-            assertThat(testPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Aceptar todo"))).isHidden();
+            // The click action removes the button in this simple mock, so we check it's not
+            // visible.
+            assertThat(testPage.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Aceptar todo")))
+                    .isHidden();
             testPage.close();
         }
     }
@@ -66,8 +72,8 @@ public class AbstractWebServiceTest {
         // Arrange: Intercept navigation and provide HTML without a cookie button
         context.route(AbstractWebService.BASE_URL, route -> {
             route.fulfill(new Route.FulfillOptions()
-                .setContentType("text/html")
-                .setBody("<html><body><h1>No cookie banner</h1></body></html>"));
+                    .setContentType("text/html")
+                    .setBody("<html><body><h1>No cookie banner</h1></body></html>"));
         });
 
         // Act & Assert: The method should not throw an exception
@@ -155,14 +161,16 @@ public class AbstractWebServiceTest {
 
     @Test
     void testCreatePageShouldHandleTimeoutException() {
-        // Arrange: Intercept navigation and provide HTML where the button is never visible
+        // Arrange: Intercept navigation and provide HTML where the button is never
+        // visible
         context.route(AbstractWebService.BASE_URL, route -> {
             route.fulfill(new Route.FulfillOptions()
-                .setContentType("text/html")
-                .setBody("<html><body><button style='display: none;'>Aceptar todo</button></body></html>"));
+                    .setContentType("text/html")
+                    .setBody("<html><body><button style='display: none;'>Aceptar todo</button></body></html>"));
         });
 
-        // Act & Assert: The method should catch the TimeoutException and not re-throw it.
+        // Act & Assert: The method should catch the TimeoutException and not re-throw
+        // it.
         try (Playwright testPlaywright = Playwright.create()) {
             assertDoesNotThrow(() -> {
                 Page testPage = webService.createPage(testPlaywright);
