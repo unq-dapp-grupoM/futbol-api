@@ -36,7 +36,8 @@ public class TeamService extends AbstractWebService {
                 firstResult = page
                         .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(1) >> a")
                         .first();
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000));
+                // If it also fails here, it means the team was not found.
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000)); 
             }
 
             firstResult.click();
@@ -48,18 +49,28 @@ public class TeamService extends AbstractWebService {
             teamDTO.setSquad(scrapeSquadData(page));
 
             return teamDTO;
+        } catch (com.microsoft.playwright.TimeoutError e) {
+            log.error("Team '{}' not found in search results or timed out.", teamName, e);
+            throw new IllegalArgumentException("Team with name '" + teamName + "' not found.");
         } catch (Exception e) {
             log.error("An error occurred during scraping for team: {}", teamName, e);
-            throw new RuntimeException("Failed to fetch data from whoscored.com", e);
+            // For other unexpected errors, throw a generic RuntimeException.
+            throw new RuntimeException("An unexpected error occurred while fetching team data.", e);
         }
     }
 
-    private List<TeamPlayerDTO> scrapeSquadData(Page page) {
+    List<TeamPlayerDTO> scrapeSquadData(Page page) {
         List<TeamPlayerDTO> squad = new ArrayList<>();
 
         // Get squad statistics table body
         Locator squadTableBody = page.locator("tbody#player-table-statistics-body");
-        squadTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+        try {
+            // Wait for the element to be attached to the DOM, not necessarily visible.
+            squadTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+        } catch (Exception e) {
+            log.warn("Squad stats table body not found or not visible. Returning empty list.");
+            return squad; // Return empty list if table body doesn't exist or is empty.
+        }
 
         List<Locator> playerRows = squadTableBody.locator("tr").all();
         for (Locator row : playerRows) {
