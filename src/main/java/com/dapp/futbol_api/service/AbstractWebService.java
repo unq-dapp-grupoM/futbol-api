@@ -87,7 +87,12 @@ public abstract class AbstractWebService {
 
     protected String extractAttribute(Page page, String selector, String attribute) {
         try {
-            return page.locator(selector).first().getAttribute(attribute);
+            String value = page.locator(selector).first().getAttribute(attribute);
+            if (value == null) {
+                log.warn("Attribute '{}' not found for element with selector: {}", attribute, selector);
+                return NOT_FOUND;
+            }
+            return value;
         } catch (Exception e) {
             log.warn("Could not find attribute '{}' for element with selector: {}", attribute, selector);
             return NOT_FOUND;
