@@ -47,6 +47,7 @@ public class ApiKeyAuthFilterTest {
         String validApiKey = "my-secret-api-key";
         ReflectionTestUtils.setField(apiKeyAuthFilter, "principalRequestHeader", validApiKey);
         when(request.getHeader("X-API-KEY")).thenReturn(validApiKey);
+        when(request.getRequestURI()).thenReturn("/api/test");
 
         // Act
         apiKeyAuthFilter.doFilterInternal(request, response, filterChain);
@@ -65,6 +66,7 @@ public class ApiKeyAuthFilterTest {
         String validApiKey = "my-secret-api-key";
         ReflectionTestUtils.setField(apiKeyAuthFilter, "principalRequestHeader", validApiKey);
         when(request.getHeader("X-API-KEY")).thenReturn("wrong-key");
+        when(request.getRequestURI()).thenReturn("/api/test");
 
         // Act
         apiKeyAuthFilter.doFilterInternal(request, response, filterChain);
@@ -78,6 +80,7 @@ public class ApiKeyAuthFilterTest {
     void testDoFilterInternalShouldNotAuthenticateWhenApiKeyIsMissing() throws ServletException, IOException {
         // Arrange
         when(request.getHeader("X-API-KEY")).thenReturn(null);
+        when(request.getRequestURI()).thenReturn("/api/test");
 
         // Act
         apiKeyAuthFilter.doFilterInternal(request, response, filterChain);
@@ -89,13 +92,17 @@ public class ApiKeyAuthFilterTest {
 
     @Test
     void testDoFilterInternalShouldSkipWhenAuthenticationAlreadyExists() throws ServletException, IOException {
+        when(request.getRequestURI()).thenReturn("/api/test");
+
         // Arrange: Simulate an existing authentication
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("existing-user", null));
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken("existing-user", null));
 
         // Act
         apiKeyAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Assert: Verify that the filter did not try to read the header and just continued
+        // Assert: Verify that the filter did not try to read the header and just
+        // continued
         verify(request, never()).getHeader("X-API-KEY");
         verify(filterChain).doFilter(request, response);
     }
