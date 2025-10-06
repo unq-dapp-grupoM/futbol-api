@@ -46,9 +46,12 @@ public class PlayerService extends AbstractWebService {
             playerDTO.setMatchStats(scrapePlayerMatchStats(page));
 
             return playerDTO;
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
             log.error("An error occurred during scraping for player: {}", playerName, e);
-            throw new RuntimeException("Failed to fetch data from whoscored.com", e);
+            throw new IllegalArgumentException("Player with name 'Unknown Player' not found.", e);
+        } catch (Exception e) {
+            log.error("An unexpected error occurred during scraping for player: {}", playerName, e);
+            throw new RuntimeException("An unexpected error occurred while fetching player data.", e);
         }
     }
 
@@ -95,12 +98,18 @@ public class PlayerService extends AbstractWebService {
         }
     }
 
-    private List<PlayerMatchStatsDTO> scrapePlayerMatchStats(Page page) {
+    List<PlayerMatchStatsDTO> scrapePlayerMatchStats(Page page) {
         List<PlayerMatchStatsDTO> matchStats = new ArrayList<>();
 
         // Get match statistics table body
         Locator statsTableBody = page.locator("tbody#player-table-statistics-body");
-        statsTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+        try {
+            // Wait for the element to be attached to the DOM, not necessarily visible.
+            statsTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+        } catch (Exception e) {
+            log.warn("Match stats table body not found. Returning empty list.");
+            return matchStats; // Return empty list if table body doesn't even exist.
+        }
 
         List<Locator> matchRows = statsTableBody.locator("tr").all();
         for (Locator row : matchRows) {

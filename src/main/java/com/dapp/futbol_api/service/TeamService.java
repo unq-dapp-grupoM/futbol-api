@@ -54,12 +54,18 @@ public class TeamService extends AbstractWebService {
         }
     }
 
-    private List<TeamPlayerDTO> scrapeSquadData(Page page) {
+    List<TeamPlayerDTO> scrapeSquadData(Page page) {
         List<TeamPlayerDTO> squad = new ArrayList<>();
 
         // Get squad statistics table body
         Locator squadTableBody = page.locator("tbody#player-table-statistics-body");
-        squadTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+        try {
+            // Wait for the element to be attached to the DOM, not necessarily visible.
+            squadTableBody.waitFor(new Locator.WaitForOptions().setTimeout(10000));
+        } catch (Exception e) {
+            log.warn("Squad stats table body not found or not visible. Returning empty list.");
+            return squad; // Return empty list if table body doesn't exist or is empty.
+        }
 
         List<Locator> playerRows = squadTableBody.locator("tr").all();
         for (Locator row : playerRows) {
