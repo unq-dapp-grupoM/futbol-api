@@ -24,25 +24,37 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
+            @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
 
-        // No procesar si ya hay una autenticación en el contexto
-        // Do not process if there is already an authentication in the context
+        String path = request.getRequestURI();
+
+        // Ignore Public Endpoints
+        if (path.equals("/") ||
+                path.startsWith("/api/auth") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/v3/api-docs") ||
+                path.startsWith("/api/searchPlayer") ||
+                path.startsWith("/api/teamInfo")) {
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // ✅ Si ya hay autenticación, continuar
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             filterChain.doFilter(request, response);
             return;
         }
 
+        // 🔑 Verificar API Key
         String potentialApiKey = request.getHeader("X-API-KEY");
 
         if (potentialApiKey != null && potentialApiKey.equals(principalRequestHeader)) {
-            // Clave válida, creamos una autenticación simple para el sistema/servicio
-            // Valid key, create a simple authentication for the system/service
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     "api-service",
                     null,
-                    AuthorityUtils.createAuthorityList("ROLE_SERVICE") // Role for services
-            );
+                    AuthorityUtils.createAuthorityList("ROLE_SERVICE"));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
