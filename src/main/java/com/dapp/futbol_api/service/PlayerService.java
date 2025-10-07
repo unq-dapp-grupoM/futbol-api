@@ -18,8 +18,9 @@ public class PlayerService extends AbstractWebService {
     private static final Logger log = LoggerFactory.getLogger(PlayerService.class);
 
     public PlayerDTO getPlayerInfoByName(String playerName) {
-        try (Playwright playwright = Playwright.create()) {
-            Page page = createPage(playwright);
+        Page page = null;
+        try {
+            page = createPage();
 
             // Search for the player
             performSearch(page, playerName);
@@ -29,7 +30,7 @@ public class PlayerService extends AbstractWebService {
                     .locator("div.search-result:has(h2:text('Jugadores:')) >> tbody tr:nth-child(2) >> a")
                     .first();
             try {
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000));
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(20000)); // Increased wait time
             } catch (Exception e) {
                 log.error("Player '{}' not found in search results or timed out.", playerName);
                 throw new IllegalArgumentException("Player with name '" + playerName + "' not found.");
@@ -47,11 +48,15 @@ public class PlayerService extends AbstractWebService {
 
             return playerDTO;
         } catch (IllegalArgumentException e) {
-            log.error("An error occurred during scraping for player: {}", playerName, e);
-            throw new IllegalArgumentException("Player with name 'Unknown Player' not found.", e);
+            // Re-throw the specific exception without wrapping it
+            throw e;
         } catch (Exception e) {
             log.error("An unexpected error occurred during scraping for player: {}", playerName, e);
             throw new RuntimeException("An unexpected error occurred while fetching player data.", e);
+        } finally {
+            if (page != null) {
+                page.context().close(); // Close context and page to free up resources
+            }
         }
     }
 

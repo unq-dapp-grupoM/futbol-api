@@ -5,7 +5,6 @@ import java.util.List;
 
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.LoadState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +19,10 @@ public class TeamService extends AbstractWebService {
     private static final Logger log = LoggerFactory.getLogger(TeamService.class);
 
     public TeamDTO getTeamInfoByName(String teamName) {
-        try (Playwright playwright = Playwright.create()) { // Bean of Spring
-            Page page = createPage(playwright); // Injected into Service
+        Page page = null;
+        try {
+            page = createPage();
+
             // Search for the team
             performSearch(page, teamName);
 
@@ -30,14 +31,15 @@ public class TeamService extends AbstractWebService {
                     .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(2) >> a")
                     .first();
             try {
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Esperar hasta 15 segundos
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(20000)); // Increased wait time
             } catch (Exception e) {
                 log.warn("Team '{}' not found in the second result block, trying the first one.", teamName);
                 firstResult = page
                         .locator("div.search-result:has(h2:text('Equipos:')) >> tbody tr:nth-child(1) >> a")
                         .first();
-                // If it also fails here, it means the team was not found.
-                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000)); 
+                // If it also fails here, it means the team was not found, and it will throw an
+                // exception.
+                firstResult.waitFor(new Locator.WaitForOptions().setTimeout(5000));
             }
 
             firstResult.click();
@@ -50,12 +52,16 @@ public class TeamService extends AbstractWebService {
 
             return teamDTO;
         } catch (com.microsoft.playwright.TimeoutError e) {
-            log.error("Team '{}' not found in search results or timed out.", teamName, e);
+            log.error("Team '{}' not found in search results or timed out.", teamName);
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found.");
         } catch (Exception e) {
             log.error("An error occurred during scraping for team: {}", teamName, e);
             // For other unexpected errors, throw a generic RuntimeException.
             throw new RuntimeException("An unexpected error occurred while fetching team data.", e);
+        } finally {
+            if (page != null) {
+                page.context().close(); // Close context and page to free up resources
+            }
         }
     }
 
