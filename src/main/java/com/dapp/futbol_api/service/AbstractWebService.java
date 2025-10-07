@@ -26,18 +26,30 @@ public abstract class AbstractWebService {
     private Browser browser;
 
     protected Page createPage() {
-        // Create a browser context with options that simulate a real user.
         BrowserContext context = browser.newContext(new Browser.NewContextOptions()
                 .setUserAgent(
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                .setViewportSize(1920, 1080) // Common window size
-                .setLocale("es-ES") // Set locale
-                .setTimezoneId("America/Argentina/Buenos_Aires"));
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .setViewportSize(1920, 1080)
+                .setLocale("es-ES")
+                .setTimezoneId("America/Argentina/Buenos_Aires")
+                .setJavaScriptEnabled(true) // 🔹 Asegura ejecución de scripts dinámicos
+                .setBypassCSP(true)); // 🔹 Evita que políticas de contenido bloqueen scripts
 
         Page page = context.newPage();
 
+        // 🔹 Simulá movimiento del mouse o scroll para evitar detección de bot
         page.navigate(BASE_URL);
-        handleCookieBanner(page);
+        page.waitForLoadState(LoadState.NETWORKIDLE);
+        page.mouse().move(300, 200);
+        page.evaluate("window.scrollBy(0, 500)");
+
+        // 🔹 Salta el banner si aparece (ya robusto)
+        try {
+            handleCookieBanner(page);
+        } catch (Exception e) {
+            log.warn("Error handling cookie banner: {}", e.getMessage());
+        }
+
         return page;
     }
 
@@ -95,16 +107,17 @@ public abstract class AbstractWebService {
 
     protected void performSearch(Page page, String searchTerm) {
         log.info("Searching for: {}", searchTerm);
-        // Using getByPlaceholder is more robust than a generic CSS selector.
+
         Locator searchInput = page.getByPlaceholder("Buscar campeonatos, equipos y jugadores");
-        // Click first to ensure the input has focus.
+        searchInput.waitFor(new Locator.WaitForOptions().setTimeout(10000)); // 🔹 Espera a que aparezca
         searchInput.click();
         searchInput.fill(searchTerm);
         searchInput.press("Enter");
-        // Wait for the network to be idle, but with a longer timeout for production
-        // environments.
+
         log.info("Waiting for search results to load...");
-        page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(30000));
+        page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(40000)); // 🔹 Más
+                                                                                                            // tiempo
+        page.waitForTimeout(3000); // 🔹 Pequeña pausa adicional
         log.info("Search page loaded.");
     }
 
