@@ -39,6 +39,7 @@ public abstract class AbstractWebService {
 
         // 🔹 Simulá movimiento del mouse o scroll para evitar detección de bot
         page.navigate(BASE_URL);
+        log.info("HTML Snapshot:\n{}", page.content().substring(0, 500));
         page.waitForLoadState(LoadState.NETWORKIDLE);
         page.mouse().move(300, 200);
         page.evaluate("window.scrollBy(0, 500)");
