@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -28,6 +29,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
+
+        String path = request.getRequestURI();
+        List<String> whiteList = List.of(
+                "/", "/api/auth", "/swagger-ui", "/v3/api-docs",
+                "/api/searchPlayer", "/api/teamInfo");
+
+        for (String white : whiteList) {
+            if (path.startsWith(white)) {
+                filterChain.doFilter(request, response);
+                return; // Salimos del filtro para endpoints públicos
+            }
+        }
+
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
         final String userEmail;
