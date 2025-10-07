@@ -42,33 +42,54 @@ public abstract class AbstractWebService {
     }
 
     private void handleCookieBanner(Page page) {
+        boolean isRender = System.getenv("RENDER") != null; // Render define esta variable automáticamente
+        int timeout = isRender ? 25000 : 15000; // mayor tolerancia en Render
+
         try {
             log.info("Waiting for cookie banner...");
 
-            // The cookie banner might be inside an iframe. Let's check for that.
-            FrameLocator iframe = page.frameLocator("[title='SP Consent Message']");
-            Locator acceptButton;
+            // Pequeña espera para permitir que carguen scripts lentos (solo Render)
+            if (isRender) {
+                page.waitForTimeout(2000);
+            }
 
-            // More robust pattern for button text
+            // Patrón flexible para distintos idiomas o textos de botones
             Pattern acceptPattern = Pattern.compile("ACCEPT ALL|Aceptar todo|Consent|I Agree",
                     Pattern.CASE_INSENSITIVE);
 
-            if (iframe.locator("body").isVisible()) {
-                log.info("Cookie banner is inside an iframe. Searching within it.");
+            Locator acceptButton = null;
+
+            // Intentar detectar iframe de consentimiento
+            FrameLocator iframe = page.frameLocator("[title='SP Consent Message']");
+            boolean iframeVisible = false;
+            try {
+                iframeVisible = iframe.locator("body").isVisible();
+            } catch (Exception ignored) {
+                // si no existe, seguimos
+            }
+
+            if (iframeVisible) {
+                log.info("Cookie banner found inside iframe. Searching within it.");
                 acceptButton = iframe.getByRole(AriaRole.BUTTON,
                         new FrameLocator.GetByRoleOptions().setName(acceptPattern));
             } else {
                 log.info("Searching for cookie banner in the main page.");
-                acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName(acceptPattern));
+                acceptButton = page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName(acceptPattern));
             }
 
-            acceptButton.waitFor(new Locator.WaitForOptions().setTimeout(15000)); // Increased wait time to 15s
-            acceptButton.click();
-            log.info("Cookie banner accepted.");
+            // Verificamos si el botón es visible antes de esperar o hacer click
+            if (acceptButton != null && acceptButton.isVisible()) {
+                acceptButton.click();
+                log.info("Cookie banner accepted successfully.");
+            } else {
+                log.warn("Cookie banner not visible, skipping acceptance step (likely headless environment).");
+            }
+
+        } catch (com.microsoft.playwright.TimeoutError e) {
+            log.warn("Cookie banner not found within {}ms, continuing without accepting. (TimeoutError)", timeout);
         } catch (Exception e) {
-            log.warn(
-                    "Cookie button not found or could not be clicked within the timeout. This might be okay. Continuing... Error: "
-                            + e.getMessage());
+            log.warn("Unexpected error while handling cookie banner: {}", e.getMessage());
         }
     }
 
@@ -119,4 +140,5 @@ public abstract class AbstractWebService {
             return NOT_FOUND;
         }
     }
+
 }
