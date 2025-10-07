@@ -3,15 +3,16 @@ package com.dapp.futbol_api.service;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
-import com.microsoft.playwright.options.AriaRole;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.options.LoadState;
+import com.microsoft.playwright.options.AriaRole;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.regex.Pattern;
 import java.util.List;
 
 public abstract class AbstractWebService {
@@ -43,16 +44,26 @@ public abstract class AbstractWebService {
 
         // Accept cookies before each navigation
         page.navigate(BASE_URL);
+        handleCookieBanner(page);
+        return page;
+    }
+
+    private void handleCookieBanner(Page page) {
         try {
-            // Using getByRole is more robust for finding the cookie button.
-            Locator acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Aceptar todo"));
-            acceptButton.waitFor(new Locator.WaitForOptions().setTimeout(7000)); // Increase wait time
+            log.info("Waiting for cookie banner...");
+            // Use a single regex pattern to find the button by multiple possible names,
+            // case-insensitively.
+            // This is the correct way in Playwright for Java to achieve non-exact,
+            // case-insensitive matching.
+            Locator acceptButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions()
+                    .setName(Pattern.compile("ACCEPT ALL|Aceptar todo", Pattern.CASE_INSENSITIVE)));
+            acceptButton.waitFor(new Locator.WaitForOptions().setTimeout(10000)); // Wait for 10 seconds
             acceptButton.click();
             log.info("Cookie banner accepted.");
         } catch (Exception e) {
-            log.warn("Cookie button not found or could not be clicked. Continuing...");
+            log.warn(
+                    "Cookie button not found or could not be clicked within the timeout. This might be okay. Continuing...");
         }
-        return page;
     }
 
     protected void performSearch(Page page, String searchTerm) {
@@ -63,7 +74,11 @@ public abstract class AbstractWebService {
         searchInput.click();
         searchInput.fill(searchTerm);
         searchInput.press("Enter");
-        page.waitForLoadState(LoadState.NETWORKIDLE);
+        // Wait for the network to be idle, but with a longer timeout for production
+        // environments.
+        log.info("Waiting for search results to load...");
+        page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(30000));
+        log.info("Search page loaded.");
     }
 
     protected String extractText(Page page, String selector) {
