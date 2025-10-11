@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/searchPlayer")
+@RequestMapping("/api")
 @Tag(name = "Player Info", description = "Endpoints to get player information.")
 @SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class PlayerController {
   private final PlayerService playerService;
 
   @Operation(summary = "Search and get player information by name", description = "Searches for a player by name on WhoScored and extracts their details. AUTHENTICATION REQUIRED!")
-  @GetMapping("/playerName")
+  @GetMapping("/player")
   public ResponseEntity<PlayerDTO> getPlayerInfoByName(
       @Parameter(description = "Name of the player to search for.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
     PlayerDTO player = playerService.getPlayerInfoByName(playerName);

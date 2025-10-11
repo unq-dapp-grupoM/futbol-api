@@ -22,14 +22,17 @@ public class SecurityConfig {
         private final ApiKeyAuthFilter apiKeyAuthFilter;
 
         private static final String[] WHITE_LIST_URLS = {
-                        // Rutas públicas de la API
-                        "/api/**",
-                        // Rutas de documentación (Swagger)
+                        // Endpoint raíz
+                        "/",
+                        // Endpoints públicos que no requieren ningún tipo de token
+                        "/api/auth/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        // Ruta para el Health Check de Render
-                        "/actuator/**"
+                        "/actuator/**",
+                        // Endpoints de scraping que son públicos
+                        "/api/player",
+                        "/api/team"
         };
 
         @Bean
@@ -37,11 +40,11 @@ public class SecurityConfig {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .authorizeHttpRequests(req -> req.requestMatchers(WHITE_LIST_URLS).permitAll()
-                                                // Ejemplo: un endpoint protegido por API Key
+                                                // Rutas internas protegidas por API Key
                                                 .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
-                                                // El resto de endpoints requieren autenticación JWT
+                                                // Cualquier otra petición (que no esté en la WHITE_LIST) requiere
+                                                // autenticación
                                                 .anyRequest().authenticated())
-
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 // Primero se ejecuta el filtro de API Key para las rutas internas
