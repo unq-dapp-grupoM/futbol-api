@@ -29,7 +29,7 @@ public class SecurityConfig {
                         "/swagger-ui.html",
                         "/h2-console/**",
                         "/api/searchPlayer/**",
-                        "/api/teamInfo/**"
+                        "/api/teamInfo/**",
         };
 
         @Bean
