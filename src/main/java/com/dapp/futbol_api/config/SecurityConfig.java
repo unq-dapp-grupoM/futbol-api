@@ -22,14 +22,14 @@ public class SecurityConfig {
         private final ApiKeyAuthFilter apiKeyAuthFilter;
 
         private static final String[] WHITE_LIST_URLS = {
-                        "/",
-                        "/api/auth/**",
+                        // Rutas públicas de la API
+                        "/api/**",
+                        // Rutas de documentación (Swagger)
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/h2-console/**",
-                        "/api/searchPlayer/**",
-                        "/api/teamInfo/**",
+                        // Ruta para el Health Check de Render
+                        "/actuator/**"
         };
 
         @Bean
