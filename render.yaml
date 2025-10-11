@@ -14,3 +14,9 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: production # Activa el perfil de producción de Spring.
+      # Inyecta los secretos como variables de entorno en Render.
+      # Debes crear estas variables en el dashboard de Render para tu servicio.
+      - key: API_SECURITY_JWT_SECRET_KEY
+        fromSecret: true
+      - key: API_SECURITY_KEY
+        fromSecret: true
