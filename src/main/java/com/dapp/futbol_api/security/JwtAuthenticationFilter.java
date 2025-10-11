@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Arrays;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Component
 @RequiredArgsConstructor
@@ -24,22 +25,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
+    // Replicamos la lista blanca de SecurityConfig para que el filtro la conozca.
+    // Es crucial que esta lista sea idéntica a la de SecurityConfig.java
+    private static final String[] WHITE_LIST_URLS = {
+            "/",
+            "/api/auth/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/actuator/**",
+            "/api/player",
+            "/api/team"
+    };
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        String path = request.getRequestURI();
-        List<String> whiteList = List.of(
-                "/", "/api/auth", "/swagger-ui", "/v3/api-docs",
-                "/api/searchPlayer", "/api/teamInfo");
-
-        for (String white : whiteList) {
-            if (path.startsWith(white)) {
-                filterChain.doFilter(request, response);
-                return; // Salimos del filtro para endpoints públicos
-            }
+        if (isWhiteListed(request)) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
         final String authHeader = request.getHeader("Authorization");
@@ -66,5 +73,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isWhiteListed(HttpServletRequest request) {
+        return Arrays.stream(WHITE_LIST_URLS)
+                .anyMatch(pattern -> {
+                    AntPathRequestMatcher matcher = new AntPathRequestMatcher(pattern);
+                    return matcher.matches(request);
+                });
     }
 }
