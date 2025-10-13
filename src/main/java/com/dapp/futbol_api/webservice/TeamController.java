@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Team Info", description = "Endpoints for team information.")
-@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class TeamController {
 

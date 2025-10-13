@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api")
 @Tag(name = "Player Info", description = "Endpoints to get player information.")
-@SecurityRequirement(name = "bearerAuth")
 @RequiredArgsConstructor
 public class PlayerController {
 
