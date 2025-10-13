@@ -15,8 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Component
 @RequiredArgsConstructor
@@ -25,29 +23,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
-    // Replicamos la lista blanca de SecurityConfig para que el filtro la conozca.
-    // Es crucial que esta lista sea idéntica a la de SecurityConfig.java
-    private static final String[] WHITE_LIST_URLS = {
-            "/",
-            "/api/auth/**",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/actuator/**",
-            "/api/player",
-            "/api/team"
-    };
-
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
-
-        if (isWhiteListed(request)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
@@ -73,13 +53,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         filterChain.doFilter(request, response);
-    }
-
-    private boolean isWhiteListed(HttpServletRequest request) {
-        return Arrays.stream(WHITE_LIST_URLS)
-                .anyMatch(pattern -> {
-                    AntPathRequestMatcher matcher = new AntPathRequestMatcher(pattern);
-                    return matcher.matches(request);
-                });
     }
 }

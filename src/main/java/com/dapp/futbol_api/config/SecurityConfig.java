@@ -39,17 +39,17 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
-                                .authorizeHttpRequests(req -> req.requestMatchers(WHITE_LIST_URLS).permitAll()
-                                                // Rutas internas protegidas por API Key
-                                                .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
-                                                // Cualquier otra petición (que no esté en la WHITE_LIST) requiere
-                                                // autenticación
-                                                .anyRequest().authenticated())
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                // Primero se ejecuta el filtro de API Key para las rutas internas
+                                .authorizeHttpRequests(req -> req
+                                                // 1. Rutas públicas: no requieren ningún filtro ni autenticación.
+                                                .requestMatchers(WHITE_LIST_URLS).permitAll()
+                                                // 2. Rutas de servicio: requieren el ApiKeyAuthFilter (y rol SERVICE).
+                                                .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
+                                                // 3. El resto de rutas: requieren el JwtAuthenticationFilter (y estar
+                                                // autenticado).
+                                                .anyRequest().authenticated())
                                 .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                                // Luego, el filtro JWT para el resto de las rutas autenticadas
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
                 return http.build();
