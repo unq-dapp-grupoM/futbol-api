@@ -1,5 +1,6 @@
 package com.dapp.futbol_api.security;
 
+import com.dapp.futbol_api.config.SecurityConstants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,10 +11,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Component
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
@@ -26,6 +29,13 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
+
+        // Si la petición coincide con alguna de las URLs de la lista blanca,
+        // saltamos este filtro y continuamos con la cadena.
+        if (isWhiteListed(request)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // ✅ Si ya hay autenticación, continuar
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
@@ -45,5 +55,13 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isWhiteListed(HttpServletRequest request) {
+        return Arrays.stream(SecurityConstants.WHITE_LIST_URLS)
+                .anyMatch(pattern -> {
+                    AntPathRequestMatcher matcher = new AntPathRequestMatcher(pattern);
+                    return matcher.matches(request);
+                });
     }
 }

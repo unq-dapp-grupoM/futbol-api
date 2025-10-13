@@ -21,37 +21,23 @@ public class SecurityConfig {
         private final JwtAuthenticationFilter jwtAuthFilter;
         private final ApiKeyAuthFilter apiKeyAuthFilter;
 
-        private static final String[] WHITE_LIST_URLS = {
-                        // Endpoint raíz
-                        "/",
-                        // Endpoints públicos que no requieren ningún tipo de token
-                        "/api/auth/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                        "/actuator/**",
-                        // Endpoints de scraping que son públicos
-                        "/api/player",
-                        "/api/team"
-        };
-
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
                 http
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                // ✅ Aseguramos que los filtros no se apliquen a las rutas públicas
+                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                                 .authorizeHttpRequests(req -> req
                                                 // 1. Rutas públicas: no requieren ningún filtro ni autenticación.
-                                                .requestMatchers(WHITE_LIST_URLS).permitAll()
+                                                .requestMatchers(SecurityConstants.WHITE_LIST_URLS).permitAll()
                                                 // 2. Rutas de servicio: requieren el ApiKeyAuthFilter (y rol SERVICE).
                                                 .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
                                                 // 3. El resto de rutas: requieren el JwtAuthenticationFilter (y estar
                                                 // autenticado).
-                                                .anyRequest().authenticated())
-                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
+                                                .anyRequest().authenticated());
                 return http.build();
         }
 }
