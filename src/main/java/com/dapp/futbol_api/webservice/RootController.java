@@ -1,5 +1,7 @@
 package com.dapp.futbol_api.webservice;
 
+import java.time.LocalDateTime;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -8,6 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class RootController {
     @GetMapping("/")
     public ResponseEntity<String> home() {
-        return ResponseEntity.ok("API de Fútbol corriendo correctamente");
+        return ResponseEntity.ok("API de Fútbol corriendo correctamente" + LocalDateTime.now());
     }
 }
