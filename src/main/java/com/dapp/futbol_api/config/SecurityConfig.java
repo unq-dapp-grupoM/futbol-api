@@ -27,9 +27,6 @@ public class SecurityConfig {
                                 .csrf(AbstractHttpConfigurer::disable)
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                // ✅ Aseguramos que los filtros no se apliquen a las rutas públicas
-                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                                 .authorizeHttpRequests(req -> req
                                                 // 1. Rutas públicas: no requieren ningún filtro ni autenticación.
                                                 .requestMatchers(SecurityConstants.WHITE_LIST_URLS).permitAll()
@@ -37,7 +34,15 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
                                                 // 3. El resto de rutas: requieren el JwtAuthenticationFilter (y estar
                                                 // autenticado).
-                                                .anyRequest().authenticated());
+                                                .anyRequest().authenticated())
+                                // ✅ Añadimos los filtros DESPUÉS de definir las autorizaciones
+                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+                // Necesario para la consola H2 si se usa dentro de un iframe y buena práctica
+                // general
+                http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
+
                 return http.build();
         }
 }
