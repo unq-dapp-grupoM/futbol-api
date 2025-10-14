@@ -14,8 +14,8 @@ public final class SecurityConstants {
             // Ruta para el Health Check de Render
             "/actuator/**",
             // Endpoints de scraping que son públicos
-            "/api/player",
-            "/api/team"
+            "/api/player**",
+            "/api/team**"
     };
 
     private SecurityConstants() {
