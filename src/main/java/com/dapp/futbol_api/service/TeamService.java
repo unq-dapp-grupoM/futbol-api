@@ -1,6 +1,5 @@
 package com.dapp.futbol_api.service;
 
-import com.dapp.futbol_api.model.dto.TeamDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,41 +8,65 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class TeamService extends AbstractWebService {
 
     private static final Logger log = LoggerFactory.getLogger(TeamService.class);
 
-    public TeamDTO getTeamInfoByName(String teamName) {
+    public TeamService(RestTemplateBuilder restTemplateBuilder,
+            @Value("${scraper.service.url}") String scraperServiceUrl) {
+        super(restTemplateBuilder, scraperServiceUrl);
+    }
+
+    public Object getTeamInfoByName(String teamName) {
         log.info("Requesting team info for '{}' from scraper service", teamName);
+
         try {
-            String url = UriComponentsBuilder.fromPath("/api/scrape/team")
-                    .queryParam("teamName", teamName)
-                    .toUriString();
+            // Construir la URL manualmente SIN encoding adicional
+            String url = buildTeamUrl(teamName);
+            log.debug("Final URL to scraper-service: {}", url);
 
-            TeamDTO teamDTO = restTemplate.getForObject(url, TeamDTO.class);
+            // Obtener como lista y extraer el primer elemento
+            List<Map<String, Object>> teamsList = restTemplate.getForObject(url, List.class);
 
-            if (teamDTO == null) {
+            if (teamsList == null || teamsList.isEmpty()) {
                 throw new IllegalArgumentException("Team with name '" + teamName + "' not found.");
             }
-            return teamDTO;
+
+            return teamsList.get(0);
         } catch (HttpClientErrorException.NotFound e) {
             log.error("Team '{}' not found by scraper service. Status: {}", teamName, e.getStatusCode());
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found.", e);
-        } catch (HttpClientErrorException e) {
-            log.error("Scraper service returned an error for team '{}'. Status: {}, Body: {}", teamName,
-                    e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Error communicating with scraper service for team '" + teamName + "'.", e);
         } catch (Exception e) {
-            log.error("An unexpected error occurred while fetching team data for '{}': {}", teamName, e.getMessage(),
-                    e);
-            throw new RuntimeException("An unexpected error occurred while fetching team data.", e);
+            log.error("Error fetching team data for '{}': {}", teamName, e.getMessage(), e);
+            throw new RuntimeException("Error fetching team data.", e);
         }
     }
 
-    public TeamService(RestTemplateBuilder restTemplateBuilder,
-            @Value("${scraper.service.url}") String scraperServiceUrl) {
-        // La URL del scraper service se inyectará desde application.properties
-        super(restTemplateBuilder, scraperServiceUrl);
+    /**
+     * Construye la URL manualmente para evitar doble encoding
+     */
+    private String buildTeamUrl(String teamName) {
+        // Construir la URL manualmente sin encoding automático
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append("/api/scrape/team?teamName=");
+
+        // Codificar manualmente SOLO una vez
+        urlBuilder.append(encodeValue(teamName));
+
+        return urlBuilder.toString();
+    }
+
+    /**
+     * Codificación manual simple para espacios
+     */
+    private String encodeValue(String value) {
+        return value.replace(" ", "%20")
+                .replace("&", "%26")
+                .replace("?", "%3F")
+                .replace("=", "%3D");
     }
 }

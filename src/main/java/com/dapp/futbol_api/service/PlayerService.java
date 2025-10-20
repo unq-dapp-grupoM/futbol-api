@@ -1,6 +1,5 @@
 package com.dapp.futbol_api.service;
 
-import com.dapp.futbol_api.model.dto.PlayerDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class PlayerService extends AbstractWebService {
 
@@ -16,34 +18,55 @@ public class PlayerService extends AbstractWebService {
 
     public PlayerService(RestTemplateBuilder restTemplateBuilder,
             @Value("${scraper.service.url}") String scraperServiceUrl) {
-        // La URL del scraper service se inyectará desde application.properties
         super(restTemplateBuilder, scraperServiceUrl);
     }
 
-    public PlayerDTO getPlayerInfoByName(String playerName) {
+    public Object getPlayerInfoByName(String playerName) {
         log.info("Requesting player info for '{}' from scraper service", playerName);
+
         try {
-            String url = UriComponentsBuilder.fromPath("/api/scrape/player")
-                    .queryParam("playerName", playerName)
-                    .toUriString();
+            // Construir la URL manualmente SIN encoding adicional
+            String url = buildPlayerUrl(playerName);
+            log.debug("Final URL to scraper-service: {}", url);
 
-            PlayerDTO playerDTO = restTemplate.getForObject(url, PlayerDTO.class);
+            // Obtener como lista y extraer el primer elemento
+            List<Map<String, Object>> playersList = restTemplate.getForObject(url, List.class);
 
-            if (playerDTO == null) {
+            if (playersList == null || playersList.isEmpty()) {
                 throw new IllegalArgumentException("Player with name '" + playerName + "' not found.");
             }
-            return playerDTO;
+
+            return playersList.get(0);
         } catch (HttpClientErrorException.NotFound e) {
             log.error("Player '{}' not found by scraper service. Status: {}", playerName, e.getStatusCode());
             throw new IllegalArgumentException("Player with name '" + playerName + "' not found.", e);
-        } catch (HttpClientErrorException e) {
-            log.error("Scraper service returned an error for player '{}'. Status: {}, Body: {}", playerName,
-                    e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw new RuntimeException("Error communicating with scraper service for player '" + playerName + "'.", e);
         } catch (Exception e) {
-            log.error("An unexpected error occurred while fetching player data for '{}': {}", playerName,
-                    e.getMessage(), e);
-            throw new RuntimeException("An unexpected error occurred while fetching player data.", e);
+            log.error("Error fetching player data for '{}': {}", playerName, e.getMessage(), e);
+            throw new RuntimeException("Error fetching player data.", e);
         }
+    }
+
+    /**
+     * Construye la URL manualmente para evitar doble encoding
+     */
+    private String buildPlayerUrl(String playerName) {
+        // Construir la URL manualmente sin encoding automático
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append("/api/scrape/player?playerName=");
+
+        // Codificar manualmente SOLO una vez
+        urlBuilder.append(encodeValue(playerName));
+
+        return urlBuilder.toString();
+    }
+
+    /**
+     * Codificación manual simple para espacios
+     */
+    private String encodeValue(String value) {
+        return value.replace(" ", "%20")
+                .replace("&", "%26")
+                .replace("?", "%3F")
+                .replace("=", "%3D");
     }
 }
