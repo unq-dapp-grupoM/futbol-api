@@ -1,11 +1,9 @@
 package com.dapp.futbol_api.webservice;
 
-import com.dapp.futbol_api.model.dto.PlayerDTO;
 import com.dapp.futbol_api.service.PlayerService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,9 +22,9 @@ public class PlayerController {
 
   @Operation(summary = "Search and get player information by name", description = "Searches for a player by name on WhoScored and extracts their details. AUTHENTICATION REQUIRED!")
   @GetMapping("/player")
-  public ResponseEntity<PlayerDTO> getPlayerInfoByName(
+  public ResponseEntity<Object> getPlayerInfoByName(
       @Parameter(description = "Name of the player to search for.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
-    PlayerDTO player = playerService.getPlayerInfoByName(playerName);
+    Object player = playerService.getPlayerInfoByName(playerName);
     return ResponseEntity.ok(player);
   }
 }

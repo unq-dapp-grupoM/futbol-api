@@ -1,0 +1,204 @@
+package com.dapp.futbol_api.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class AnalysisService extends AbstractWebService {
+
+    private static final Logger log = LoggerFactory.getLogger(AnalysisService.class);
+    private final String scraperServiceUrl;
+
+    public AnalysisService(RestTemplateBuilder restTemplateBuilder,
+            @Value("${scraper.service.url}") String scraperServiceUrl) {
+        super(restTemplateBuilder, scraperServiceUrl);
+        this.scraperServiceUrl = scraperServiceUrl;
+    }
+
+    /**
+     * Obtiene métricas de rendimiento de un jugador
+     */
+    public Object getPlayerMetrics(String playerName) {
+        // DECODIFICAR el nombre del jugador
+        String decodedPlayerName = decodeUrlParameter(playerName);
+        log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
+
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+                    .path("/api/analysis/{player}/metrics")
+                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR el segmento del path
+                    .toUriString();
+
+            log.debug("Calling metrics URL: {}", url);
+
+            // Manejar tanto array como objeto individual
+            Object response = restTemplate.getForObject(url, Object.class);
+
+            // Si es una lista, extraer el primer elemento
+            if (response instanceof List) {
+                List<?> list = (List<?>) response;
+                return list.isEmpty() ? null : list.get(0);
+            }
+
+            return response;
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Player '{}' not found for metrics analysis. Status: {}", decodedPlayerName, e.getStatusCode());
+            throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for analysis.",
+                    e);
+        } catch (HttpClientErrorException e) {
+            log.error("Error fetching metrics for player '{}'. Status: {}, Body: {}", decodedPlayerName,
+                    e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new RuntimeException(
+                    "Error communicating with analysis service for player '" + decodedPlayerName + "'.", e);
+        } catch (Exception e) {
+            log.error("Unexpected error fetching metrics for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            throw new RuntimeException("Unexpected error while fetching player metrics.", e);
+        }
+    }
+
+    /**
+     * Obtiene predicción de rendimiento para próximo partido
+     */
+    public Object getPerformancePrediction(String playerName, String opponent, boolean isHome, String position) {
+        // DECODIFICAR todos los parámetros
+        String decodedPlayerName = decodeUrlParameter(playerName);
+        String decodedOpponent = decodeUrlParameter(opponent);
+        String decodedPosition = decodeUrlParameter(position);
+
+        log.info("Requesting performance prediction for player '{}' vs '{}' from {}",
+                decodedPlayerName, decodedOpponent, scraperServiceUrl);
+
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+                    .path("/api/analysis/{player}/prediction")
+                    .queryParam("opponent", encodeQueryParam(decodedOpponent)) // CODIFICAR query param
+                    .queryParam("isHome", isHome)
+                    .queryParam("position", encodeQueryParam(decodedPosition)) // CODIFICAR query param
+                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR path segment
+                    .toUriString();
+
+            log.debug("Calling prediction URL: {}", url);
+
+            // Manejar tanto array como objeto individual
+            Object response = restTemplate.getForObject(url, Object.class);
+
+            // Si es una lista, extraer el primer elemento
+            if (response instanceof List) {
+                List<?> list = (List<?>) response;
+                return list.isEmpty() ? null : list.get(0);
+            }
+
+            return response;
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Player '{}' not found for prediction. Status: {}", decodedPlayerName, e.getStatusCode());
+            throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for prediction.",
+                    e);
+        } catch (HttpClientErrorException e) {
+            log.error("Error fetching prediction for player '{}'. Status: {}, Body: {}", decodedPlayerName,
+                    e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new RuntimeException("Error generating prediction for player '" + decodedPlayerName + "'.", e);
+        } catch (Exception e) {
+            log.error("Unexpected error generating prediction for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            throw new RuntimeException("Unexpected error while generating performance prediction.", e);
+        }
+    }
+
+    /**
+     * Codifica un parámetro query para URL
+     */
+    private String encodeQueryParam(String param) {
+        return UriUtils.encodeQueryParam(param, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Convierte datos de scraping a formato de análisis
+     */
+    public Object convertPlayerData(String playerName) {
+        // DECODIFICAR el nombre del jugador
+        String decodedPlayerName = decodeUrlParameter(playerName);
+        log.info("Converting player data for '{}' to analysis format using {}", decodedPlayerName, scraperServiceUrl);
+
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+                    .path("/api/analysis/{player}/convert-data")
+                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR el segmento del path
+                    .toUriString();
+
+            log.debug("Calling convert-data URL: {}", url);
+
+            Object result = restTemplate.postForObject(url, null, Object.class);
+            return result != null ? result : Map.of("message", "Conversion completed for " + decodedPlayerName);
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Player '{}' not found for data conversion. Status: {}", decodedPlayerName, e.getStatusCode());
+            throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for conversion.",
+                    e);
+        } catch (Exception e) {
+            log.error("Error converting data for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            throw new RuntimeException("Error converting player data to analysis format.", e);
+        }
+    }
+
+    /**
+     * Obtiene análisis comparativo del jugador
+     */
+    public Object getComparativeAnalysis(String playerName) {
+        // DECODIFICAR el nombre del jugador
+        String decodedPlayerName = decodeUrlParameter(playerName);
+        log.info("Requesting comparative analysis for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
+
+        try {
+            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+                    .path("/api/analysis/{player}/comparison")
+                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR el segmento del path
+                    .toUriString();
+
+            log.debug("Calling comparison URL: {}", url);
+
+            // Manejar tanto array como objeto individual
+            Object response = restTemplate.getForObject(url, Object.class);
+
+            // Si es una lista, extraer el primer elemento
+            if (response instanceof List) {
+                List<?> list = (List<?>) response;
+                return list.isEmpty() ? null : list.get(0);
+            }
+
+            return response;
+        } catch (Exception e) {
+            log.error("Error fetching comparative analysis for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            throw new RuntimeException("Error fetching comparative analysis.", e);
+        }
+    }
+
+    /**
+     * Decodifica parámetros URL (convierte %20 a espacios, etc.)
+     */
+    private String decodeUrlParameter(String encodedValue) {
+        try {
+            return URLDecoder.decode(encodedValue, StandardCharsets.UTF_8.name());
+        } catch (UnsupportedEncodingException e) {
+            log.warn("Failed to decode URL parameter '{}', using original value", encodedValue);
+            return encodedValue;
+        }
+    }
+
+    /**
+     * Codifica un segmento de path para URL (maneja espacios, caracteres
+     * especiales, etc.)
+     */
+    private String encodePathSegment(String segment) {
+        return UriUtils.encodePathSegment(segment, StandardCharsets.UTF_8);
+    }
+}

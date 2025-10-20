@@ -1,10 +1,8 @@
 package com.dapp.futbol_api.webservice;
 
-import com.dapp.futbol_api.model.dto.TeamDTO;
 import com.dapp.futbol_api.service.TeamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
@@ -24,9 +22,9 @@ public class TeamController {
 
     @Operation(summary = "Search and get team info", description = "Find a team and your players. AUTHENTICATION REQUIRED!")
     @GetMapping("/team")
-    public ResponseEntity<TeamDTO> getTeamInfoByName(
+    public ResponseEntity<Object> getTeamInfoByName(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
-        TeamDTO team = teamService.getTeamInfoByName(teamName);
+        Object team = teamService.getTeamInfoByName(teamName);
         return ResponseEntity.ok(team);
     }
 }
