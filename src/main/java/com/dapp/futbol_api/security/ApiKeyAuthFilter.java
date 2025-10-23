@@ -1,7 +1,6 @@
 package com.dapp.futbol_api.security;
 
 import com.dapp.futbol_api.config.SecurityConstants;
-import com.dapp.futbol_api.service.PlayerService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
