@@ -20,7 +20,8 @@ public final class SecurityConstants {
             "/api/team",
             "/api/team/**",
             "/api/team*",
-            "/api/analysis/**"
+            "/api/analysis/**",
+            "/api/futureMatches"
     };
 
     private SecurityConstants() {

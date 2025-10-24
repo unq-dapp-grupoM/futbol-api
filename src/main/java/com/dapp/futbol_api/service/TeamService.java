@@ -45,6 +45,26 @@ public class TeamService extends AbstractWebService {
         }
     }
 
+    public Object getFutureMatches(String teamName) {
+        log.info("Requesting future matches for '{}' from scraper service", teamName);
+
+        try {
+            // Construir la URL manualmente para evitar doble encoding
+            String url = buildFutureMatchesUrl(teamName);
+            log.debug("Final URL to scraper-service for future matches: {}", url);
+
+            // Obtener la lista de partidos
+            return restTemplate.getForObject(url, List.class);
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.error("Team '{}' not found by scraper service for future matches. Status: {}", teamName, e.getStatusCode());
+            throw new IllegalArgumentException("Team with name '" + teamName + "' not found for future matches.", e);
+        } catch (Exception e) {
+            log.error("Error fetching future matches for '{}': {}", teamName, e.getMessage(), e);
+            throw new RuntimeException("Error fetching future matches.", e);
+        }
+    }
+
     /**
      * Construye la URL manualmente para evitar doble encoding
      */
@@ -54,6 +74,19 @@ public class TeamService extends AbstractWebService {
         urlBuilder.append("/api/scrape/team?teamName=");
 
         // Codificar manualmente SOLO una vez
+        urlBuilder.append(encodeValue(teamName));
+
+        return urlBuilder.toString();
+    }
+
+    /**
+     * Construye la URL para obtener los partidos futuros de un equipo.
+     */
+    private String buildFutureMatchesUrl(String teamName) {
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append("/api/scrape/futureMatches?teamName=");
+
+        // Codificar manualmente el nombre del equipo
         urlBuilder.append(encodeValue(teamName));
 
         return urlBuilder.toString();
