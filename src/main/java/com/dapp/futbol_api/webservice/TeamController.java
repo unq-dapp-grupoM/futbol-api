@@ -27,4 +27,12 @@ public class TeamController {
         Object team = teamService.getTeamInfoByName(teamName);
         return ResponseEntity.ok(team);
     }
+
+    @Operation(summary = "Get future matches for a team", description = "Get a list of future matches for a given team. AUTHENTICATION REQUIRED!")
+    @GetMapping("/futureMatches")
+    public ResponseEntity<Object> getFutureMatches(
+            @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
+        Object matches = teamService.getFutureMatches(teamName);
+        return ResponseEntity.ok(matches);
+    }
 }
