@@ -28,17 +28,16 @@ public class AnalysisService extends AbstractWebService {
     }
 
     /**
-     * Obtiene métricas de rendimiento de un jugador
+     * Gets performance metrics for a player.
      */
     public Object getPlayerMetrics(String playerName) {
-        // DECODIFICAR el nombre del jugador
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
         try {
             String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
                     .path("/api/analysis/{player}/metrics")
-                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR el segmento del path
+                    .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
 
             log.debug("Calling metrics URL: {}", url);
@@ -69,10 +68,9 @@ public class AnalysisService extends AbstractWebService {
     }
 
     /**
-     * Obtiene predicción de rendimiento para próximo partido
+     * Gets performance prediction for the next match.
      */
     public Object getPerformancePrediction(String playerName, String opponent, boolean isHome, String position) {
-        // DECODIFICAR todos los parámetros
         String decodedPlayerName = decodeUrlParameter(playerName);
         String decodedOpponent = decodeUrlParameter(opponent);
         String decodedPosition = decodeUrlParameter(position);
@@ -83,10 +81,10 @@ public class AnalysisService extends AbstractWebService {
         try {
             String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
                     .path("/api/analysis/{player}/prediction")
-                    .queryParam("opponent", encodeQueryParam(decodedOpponent)) // CODIFICAR query param
+                    .queryParam("opponent", encodeQueryParam(decodedOpponent))
                     .queryParam("isHome", isHome)
-                    .queryParam("position", encodeQueryParam(decodedPosition)) // CODIFICAR query param
-                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR path segment
+                    .queryParam("position", encodeQueryParam(decodedPosition))
+                    .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
 
             log.debug("Calling prediction URL: {}", url);
@@ -116,24 +114,23 @@ public class AnalysisService extends AbstractWebService {
     }
 
     /**
-     * Codifica un parámetro query para URL
+     * Encodes a query parameter for a URL.
      */
     private String encodeQueryParam(String param) {
         return UriUtils.encodeQueryParam(param, StandardCharsets.UTF_8);
     }
 
     /**
-     * Convierte datos de scraping a formato de análisis
+     * Converts scraped data to analysis format.
      */
     public Object convertPlayerData(String playerName) {
-        // DECODIFICAR el nombre del jugador
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Converting player data for '{}' to analysis format using {}", decodedPlayerName, scraperServiceUrl);
 
         try {
             String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
                     .path("/api/analysis/{player}/convert-data")
-                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR el segmento del path
+                    .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
 
             log.debug("Calling convert-data URL: {}", url);
@@ -151,17 +148,16 @@ public class AnalysisService extends AbstractWebService {
     }
 
     /**
-     * Obtiene análisis comparativo del jugador
+     * Gets a comparative analysis of the player.
      */
     public Object getComparativeAnalysis(String playerName) {
-        // DECODIFICAR el nombre del jugador
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Requesting comparative analysis for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
         try {
             String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
                     .path("/api/analysis/{player}/comparison")
-                    .buildAndExpand(encodePathSegment(decodedPlayerName)) // CODIFICAR el segmento del path
+                    .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
 
             log.debug("Calling comparison URL: {}", url);
@@ -183,7 +179,7 @@ public class AnalysisService extends AbstractWebService {
     }
 
     /**
-     * Decodifica parámetros URL (convierte %20 a espacios, etc.)
+     * Decodes URL parameters (converts %20 to spaces, etc.).
      */
     private String decodeUrlParameter(String encodedValue) {
         try {
@@ -195,8 +191,7 @@ public class AnalysisService extends AbstractWebService {
     }
 
     /**
-     * Codifica un segmento de path para URL (maneja espacios, caracteres
-     * especiales, etc.)
+     * Encodes a path segment for a URL (handles spaces, special characters, etc.).
      */
     private String encodePathSegment(String segment) {
         return UriUtils.encodePathSegment(segment, StandardCharsets.UTF_8);

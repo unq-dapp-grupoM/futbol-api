@@ -32,8 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        // Si la petición coincide con alguna de las URLs de la lista blanca,
-        // saltamos el filtro y continuamos con la cadena.
+        // If the request matches any of the whitelisted URLs,
+        // we skip the filter and continue with the chain.
         if (isWhiteListed(request)) {
             filterChain.doFilter(request, response);
             return;

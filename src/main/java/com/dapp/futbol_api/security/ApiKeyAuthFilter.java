@@ -35,54 +35,37 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String requestURI = request.getRequestURI();
-        log.info("🔐 Processing request: {} {}", request.getMethod(), requestURI);
-
-        // Si la petición coincide con alguna de las URLs de la lista blanca,
-        // saltamos este filtro y continuamos con la cadena.
+        // If the request matches any of the whitelisted URLs,
+        // we skip this filter and continue with the chain.
         if (isWhiteListed(request)) {
-            log.info("✅ Whitelisted - Skipping auth for: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
 
-        // ✅ Si ya hay autenticación, continuar
+        // If there is already an authentication, continue
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            log.info("✅ Already authenticated - Continuing for: {}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 🔑 Verificar API Key
+        // Verify API Key
         String potentialApiKey = request.getHeader("X-API-KEY");
-        log.info("🔑 Checking API Key for: {}", requestURI);
 
         if (potentialApiKey != null && potentialApiKey.equals(principalRequestHeader)) {
-            log.info("✅ API Key valid for: {}", requestURI);
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     "api-service",
                     null,
                     AuthorityUtils.createAuthorityList("ROLE_SERVICE"));
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } else {
-            log.warn("❌ Invalid or missing API Key for: {}", requestURI);
+            log.warn("Invalid or missing API Key for: {}", request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);
     }
 
     private boolean isWhiteListed(HttpServletRequest request) {
-        boolean isWhiteListed = Arrays.stream(SecurityConstants.WHITE_LIST_URLS)
-                .anyMatch(pattern -> {
-                    AntPathRequestMatcher matcher = new AntPathRequestMatcher(pattern);
-                    boolean matches = matcher.matches(request);
-                    if (matches) {
-                        log.info("🎯 Pattern '{}' matches request: {}", pattern, request.getRequestURI());
-                    }
-                    return matches;
-                });
-
-        log.info("📋 Whitelist check for {}: {}", request.getRequestURI(), isWhiteListed);
-        return isWhiteListed;
+        return Arrays.stream(SecurityConstants.WHITE_LIST_URLS)
+                .anyMatch(pattern -> new AntPathRequestMatcher(pattern).matches(request));
     }
 }

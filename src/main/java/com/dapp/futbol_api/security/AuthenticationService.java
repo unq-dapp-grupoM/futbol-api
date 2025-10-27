@@ -31,7 +31,7 @@ public class AuthenticationService {
                 .role(Role.USER) // Default role is USER
                 .build();
         repository.save(user);
-        return "User registered successfully!";
+        return "User registered successfully";
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {

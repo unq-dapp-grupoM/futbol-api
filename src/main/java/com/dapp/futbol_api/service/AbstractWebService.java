@@ -16,7 +16,7 @@ public abstract class AbstractWebService {
     public AbstractWebService(RestTemplateBuilder restTemplateBuilder, String scraperServiceUrl) {
         log.info("Initializing WebService with base URL: {}", scraperServiceUrl);
 
-        // Configurar RestTemplate para NO codificar automáticamente las URLs
+        // Configure RestTemplate to NOT encode URLs automatically
         DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory(scraperServiceUrl);
         uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE);
 

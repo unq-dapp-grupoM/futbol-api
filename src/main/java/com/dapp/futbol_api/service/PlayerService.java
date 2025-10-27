@@ -24,11 +24,10 @@ public class PlayerService extends AbstractWebService {
         log.info("Requesting player info for '{}' from scraper service", playerName);
 
         try {
-            // Construir la URL manualmente SIN encoding adicional
             String url = buildPlayerUrl(playerName);
             log.debug("Final URL to scraper-service: {}", url);
 
-            // Obtener como lista y extraer el primer elemento
+            // Get as a list and extract the first element
             List<Map<String, Object>> playersList = restTemplate.getForObject(url, List.class);
 
             if (playersList == null || playersList.isEmpty()) {
@@ -46,21 +45,19 @@ public class PlayerService extends AbstractWebService {
     }
 
     /**
-     * Construye la URL manualmente para evitar doble encoding
+     * Builds the URL manually to avoid double encoding.
      */
     private String buildPlayerUrl(String playerName) {
-        // Construir la URL manualmente sin encoding automático
         StringBuilder urlBuilder = new StringBuilder();
         urlBuilder.append("/api/scrape/player?playerName=");
 
-        // Codificar manualmente SOLO una vez
         urlBuilder.append(encodeValue(playerName));
 
         return urlBuilder.toString();
     }
 
     /**
-     * Codificación manual simple para espacios
+     * Simple manual encoding for spaces and other characters.
      */
     private String encodeValue(String value) {
         return value.replace(" ", "%20")

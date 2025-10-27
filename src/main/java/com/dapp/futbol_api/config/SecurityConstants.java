@@ -3,17 +3,17 @@ package com.dapp.futbol_api.config;
 public final class SecurityConstants {
 
     public static final String[] WHITE_LIST_URLS = {
-            // Endpoint raíz
+            // Root endpoint
             "/",
-            // Endpoints públicos de autenticación
+            // Public authentication endpoints
             "/api/auth/**",
-            // Endpoints de documentación (Swagger)
+            // Documentation endpoints (Swagger)
             "/v3/api-docs/**",
             "/swagger-ui/**",
             "/swagger-ui.html",
-            // Ruta para el Health Check de Render
+            // Path for Render's Health Check
             "/actuator/**",
-            // Endpoints de scraping que son públicos
+            // Public scraping endpoints
             "/api/player",
             "/api/player/**",
             "/api/player*",
@@ -24,6 +24,4 @@ public final class SecurityConstants {
             "/api/futureMatches"
     };
 
-    private SecurityConstants() {
-    }
 }
