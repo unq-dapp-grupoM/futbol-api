@@ -41,11 +41,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build, test, and analyze with SonarCloud
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Provides the token for PR analysis
+      - name: Build and generate test coverage
+        run: ./gradlew clean build jacocoTestReport
+
+      - name: SonarQubeScan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env: 
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build jacocoTestReport sonar --info || true
+        with:
+          projectBaseDir: .
 
   build-and-push-image:
     name: Build and Push Docker Image

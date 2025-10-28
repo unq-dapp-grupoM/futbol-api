@@ -3,7 +3,7 @@ plugins {
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
 	id "jacoco"
-	id "org.sonarqube" version "6.3.1.5724"
+	id("org.sonarqube") version "latest.release"
 }
 
 group = 'com.dapp'
@@ -57,18 +57,20 @@ sonar {
   properties {
     property "sonar.projectKey", "unq-dapp-grupoM_futbol-api"
     property "sonar.organization", "unq-dapp-grupom"
+    property "sonar.host.url", "https://sonarcloud.io"
+    property "sonar.login", System.getenv("SONAR_TOKEN")
   }
 }
 
 bootJar {
-	mainClass = 'com.dapp.futbol_api.FutbolApiApplication' // Asegúrate de que esta sea la ruta correcta a tu clase principal
+	mainClass = 'com.dapp.futbol_api.FutbolApiApplication'
 }
 
 
 jacocoTestReport {
     reports {
         xml.required = true
-		html.required = true
+		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
 	dependsOn test
 }
