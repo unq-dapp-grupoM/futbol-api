@@ -44,13 +44,6 @@ jobs:
       - name: Build and generate test coverage
         run: ./gradlew clean build jacocoTestReport
 
-      - name: SonarQubeScan
-        uses: SonarSource/sonarqube-scan-action@v6
-        env: 
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          projectBaseDir: .
-
   build-and-push-image:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest

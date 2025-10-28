@@ -57,8 +57,8 @@ sonar {
   properties {
     property "sonar.projectKey", "unq-dapp-grupoM_futbol-api"
     property "sonar.organization", "unq-dapp-grupom"
+    property 'sonar.coverage.jacoco.xmlReportPaths', 'build/reports/jacoco/test/jacocoTestReport.xml'
     property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.login", System.getenv("SONAR_TOKEN")
   }
 }
 
