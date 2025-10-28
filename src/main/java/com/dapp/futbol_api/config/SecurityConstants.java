@@ -12,8 +12,11 @@ public final class SecurityConstants {
             "/swagger-ui/**",
             "/swagger-ui.html",
             // Path for Render's Health Check
-            "/actuator/**",
-            // Public scraping endpoints
+            "/actuator/**"
+    };
+
+    public static final String[] USER_LIST_URLS = {
+            // Scraping service endpoints
             "/api/player",
             "/api/player/**",
             "/api/player*",
