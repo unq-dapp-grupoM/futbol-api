@@ -1,5 +1,6 @@
 package com.dapp.futbol_api.service;
 
+import com.dapp.futbol_api.exception.TeamServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,11 +37,11 @@ public class TeamService extends AbstractWebService {
 
             return teamsList.get(0);
         } catch (HttpClientErrorException.NotFound e) {
-            log.error("Team '{}' not found by scraper service. Status: {}", teamName, e.getStatusCode());
+            log.debug("Team '{}' not found by scraper service. Status: {}", teamName, e.getStatusCode());
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found.", e);
         } catch (Exception e) {
-            log.error("Error fetching team data for '{}': {}", teamName, e.getMessage(), e);
-            throw new RuntimeException("Error fetching team data.", e);
+            log.error("Error fetching team data for '{}'", teamName, e);
+            throw new TeamServiceException("Error fetching team data.", e);
         }
     }
 
@@ -55,12 +56,11 @@ public class TeamService extends AbstractWebService {
             return restTemplate.getForObject(url, List.class);
 
         } catch (HttpClientErrorException.NotFound e) {
-            log.error("Team '{}' not found by scraper service for future matches. Status: {}", teamName,
-                    e.getStatusCode());
+            log.debug("Team '{}' not found by scraper service for future matches. Status: {}", teamName, e.getStatusCode());
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found for future matches.", e);
         } catch (Exception e) {
-            log.error("Error fetching future matches for '{}': {}", teamName, e.getMessage(), e);
-            throw new RuntimeException("Error fetching future matches.", e);
+            log.error("Error fetching future matches for '{}'", teamName, e);
+            throw new TeamServiceException("Error fetching future matches.", e);
         }
     }
 

@@ -26,6 +26,7 @@ public class TeamController {
     @GetMapping("/team")
     public ResponseEntity<Object> getTeamInfoByName(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
+        teamName = teamName.replaceAll("[\n\r]", "_");
         Object team = teamService.getTeamInfoByName(teamName);
         return ResponseEntity.ok(team);
     }
@@ -34,6 +35,7 @@ public class TeamController {
     @GetMapping("/futureMatches")
     public ResponseEntity<Object> getFutureMatches(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
+        teamName = teamName.replaceAll("[\n\r]", "_");
         Object matches = teamService.getFutureMatches(teamName);
         return ResponseEntity.ok(matches);
     }
