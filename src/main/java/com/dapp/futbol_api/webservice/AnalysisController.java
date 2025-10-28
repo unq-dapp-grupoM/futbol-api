@@ -22,6 +22,7 @@ public class AnalysisController {
     @GetMapping("/{playerName}/metrics")
     public ResponseEntity<Object> getPlayerMetrics(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName) {
+        playerName = playerName.replaceAll("[\n\r]", "_");
         Object metrics = analysisService.getPlayerMetrics(playerName);
         return ResponseEntity.ok(metrics);
     }
@@ -34,6 +35,7 @@ public class AnalysisController {
             @Parameter(description = "Whether the player is home", example = "true") @RequestParam boolean isHome,
             @Parameter(description = "Player position", example = "FW") @RequestParam String position) {
 
+        playerName = playerName.replaceAll("[\n\r]", "_");
         Object prediction = analysisService.getPerformancePrediction(playerName, opponent, isHome, position);
         return ResponseEntity.ok(prediction);
     }
@@ -42,6 +44,7 @@ public class AnalysisController {
     @PostMapping("/{playerName}/convert-data")
     public ResponseEntity<Object> convertPlayerData(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName) {
+        playerName = playerName.replaceAll("[\n\r]", "_");
         Object result = analysisService.convertPlayerData(playerName);
         return ResponseEntity.ok(result);
     }
@@ -50,6 +53,7 @@ public class AnalysisController {
     @GetMapping("/{playerName}/comparison")
     public ResponseEntity<Object> getComparativeAnalysis(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName) {
+        playerName = playerName.replaceAll("[\n\r]", "_");
         Object analysis = analysisService.getComparativeAnalysis(playerName);
         return ResponseEntity.ok(analysis);
     }
