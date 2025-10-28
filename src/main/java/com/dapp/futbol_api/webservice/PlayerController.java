@@ -26,6 +26,7 @@ public class PlayerController {
   @GetMapping("/player")
   public ResponseEntity<Object> getPlayerInfoByName(
       @Parameter(description = "Name of the player to search for.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
+    playerName = playerName.replaceAll("[\n\r]", "_");
     Object player = playerService.getPlayerInfoByName(playerName);
     return ResponseEntity.ok(player);
   }

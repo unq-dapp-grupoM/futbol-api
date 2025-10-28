@@ -1,5 +1,6 @@
 package com.dapp.futbol_api.service;
 
+import com.dapp.futbol_api.exception.PlayerServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,11 +37,11 @@ public class PlayerService extends AbstractWebService {
 
             return playersList.get(0);
         } catch (HttpClientErrorException.NotFound e) {
-            log.error("Player '{}' not found by scraper service. Status: {}", playerName, e.getStatusCode());
+            log.debug("Player '{}' not found by scraper service. Status: {}", playerName, e.getStatusCode());
             throw new IllegalArgumentException("Player with name '" + playerName + "' not found.", e);
         } catch (Exception e) {
-            log.error("Error fetching player data for '{}': {}", playerName, e.getMessage(), e);
-            throw new RuntimeException("Error fetching player data.", e);
+            log.error("Error fetching player data for '{}'", playerName, e);
+            throw new PlayerServiceException("Error fetching player data.", e);
         }
     }
 
