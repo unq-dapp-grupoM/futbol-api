@@ -41,8 +41,10 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build and generate test coverage
-        run: ./gradlew clean build jacocoTestReport
+      - name: Build, test and analyze with Sonar
+        run: ./gradlew clean build jacocoTestReport sonar --info
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   build-and-push-image:
     name: Build and Push Docker Image
