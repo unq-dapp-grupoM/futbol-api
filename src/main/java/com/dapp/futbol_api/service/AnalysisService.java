@@ -35,7 +35,7 @@ public class AnalysisService extends AbstractWebService {
         log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                     .path("/api/analysis/{player}/metrics")
                     .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
@@ -79,7 +79,7 @@ public class AnalysisService extends AbstractWebService {
                 decodedPlayerName, decodedOpponent, scraperServiceUrl);
 
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                     .path("/api/analysis/{player}/prediction")
                     .queryParam("opponent", encodeQueryParam(decodedOpponent))
                     .queryParam("isHome", isHome)
@@ -128,7 +128,7 @@ public class AnalysisService extends AbstractWebService {
         log.info("Converting player data for '{}' to analysis format using {}", decodedPlayerName, scraperServiceUrl);
 
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                     .path("/api/analysis/{player}/convert-data")
                     .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
@@ -155,7 +155,7 @@ public class AnalysisService extends AbstractWebService {
         log.info("Requesting comparative analysis for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
         try {
-            String url = UriComponentsBuilder.fromHttpUrl(scraperServiceUrl)
+            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                     .path("/api/analysis/{player}/comparison")
                     .buildAndExpand(encodePathSegment(decodedPlayerName))
                     .toUriString();
