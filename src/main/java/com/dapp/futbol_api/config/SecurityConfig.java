@@ -1,6 +1,5 @@
 package com.dapp.futbol_api.config;
 
-import com.dapp.futbol_api.security.ApiKeyAuthFilter;
 import com.dapp.futbol_api.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +18,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthFilter;
-        private final ApiKeyAuthFilter apiKeyAuthFilter;
 
         @Bean
         public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -28,19 +26,16 @@ public class SecurityConfig {
                                 .sessionManagement(session -> session
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .authorizeHttpRequests(req -> req
-                                                // 1. Rutas públicas: no requieren ningún filtro ni autenticación.
+                                                // 1. Public routes: do not require any filter or authentication.
                                                 .requestMatchers(SecurityConstants.WHITE_LIST_URLS).permitAll()
-                                                // 2. Rutas de servicio: requieren el ApiKeyAuthFilter (y rol SERVICE).
-                                                .requestMatchers("/api/v1/internal/**").hasRole("SERVICE")
-                                                // 3. El resto de rutas: requieren el JwtAuthenticationFilter (y estar
-                                                // autenticado).
+                                                // 2. User routes: require JWT and USER authority.
+                                                .requestMatchers(SecurityConstants.USER_LIST_URLS).hasAuthority("USER")
+                                                // 3. Any other request: requires the JwtAuthenticationFilter (and to be authenticated).
                                                 .anyRequest().authenticated())
-                                // ✅ Añadimos los filtros DESPUÉS de definir las autorizaciones
-                                .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                                // Add the filter AFTER defining the authorizations
                                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-                // Necesario para la consola H2 si se usa dentro de un iframe y buena práctica
-                // general
+                // Necessary for the H2 console if used within an iframe and a general good practice
                 http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
                 return http.build();
