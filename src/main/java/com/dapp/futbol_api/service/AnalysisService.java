@@ -53,16 +53,15 @@ public class AnalysisService extends AbstractWebService {
 
             return response;
         } catch (HttpClientErrorException.NotFound e) {
-            log.error("Player '{}' not found for metrics analysis. Status: {}", decodedPlayerName, e.getStatusCode());
+            log.debug("Player '{}' not found for metrics analysis. Status: {}", decodedPlayerName, e.getStatusCode());
             throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for analysis.",
                     e);
         } catch (HttpClientErrorException e) {
-            log.error("Error fetching metrics for player '{}'. Status: {}, Body: {}", decodedPlayerName,
-                    e.getStatusCode(), e.getResponseBodyAsString(), e);
+            log.debug("Client error fetching metrics for player '{}'. Status: {}, Body: {}", decodedPlayerName, e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException(
                     "Error communicating with analysis service for player '" + decodedPlayerName + "'.", e);
         } catch (Exception e) {
-            log.error("Unexpected error fetching metrics for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            log.error("Unexpected error fetching metrics for '{}'", decodedPlayerName, e);
             throw new RuntimeException("Unexpected error while fetching player metrics.", e);
         }
     }
@@ -100,15 +99,14 @@ public class AnalysisService extends AbstractWebService {
 
             return response;
         } catch (HttpClientErrorException.NotFound e) {
-            log.error("Player '{}' not found for prediction. Status: {}", decodedPlayerName, e.getStatusCode());
+            log.debug("Player '{}' not found for prediction. Status: {}", decodedPlayerName, e.getStatusCode());
             throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for prediction.",
                     e);
         } catch (HttpClientErrorException e) {
-            log.error("Error fetching prediction for player '{}'. Status: {}, Body: {}", decodedPlayerName,
-                    e.getStatusCode(), e.getResponseBodyAsString(), e);
+            log.debug("Client error fetching prediction for player '{}'. Status: {}, Body: {}", decodedPlayerName, e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("Error generating prediction for player '" + decodedPlayerName + "'.", e);
         } catch (Exception e) {
-            log.error("Unexpected error generating prediction for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            log.error("Unexpected error generating prediction for '{}'", decodedPlayerName, e);
             throw new RuntimeException("Unexpected error while generating performance prediction.", e);
         }
     }
@@ -138,11 +136,11 @@ public class AnalysisService extends AbstractWebService {
             Object result = restTemplate.postForObject(url, null, Object.class);
             return result != null ? result : Map.of("message", "Conversion completed for " + decodedPlayerName);
         } catch (HttpClientErrorException.NotFound e) {
-            log.error("Player '{}' not found for data conversion. Status: {}", decodedPlayerName, e.getStatusCode());
+            log.debug("Player '{}' not found for data conversion. Status: {}", decodedPlayerName, e.getStatusCode());
             throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for conversion.",
                     e);
         } catch (Exception e) {
-            log.error("Error converting data for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            log.error("Error converting data for '{}'", decodedPlayerName, e);
             throw new RuntimeException("Error converting player data to analysis format.", e);
         }
     }
@@ -173,7 +171,7 @@ public class AnalysisService extends AbstractWebService {
 
             return response;
         } catch (Exception e) {
-            log.error("Error fetching comparative analysis for '{}': {}", decodedPlayerName, e.getMessage(), e);
+            log.error("Error fetching comparative analysis for '{}'", decodedPlayerName, e);
             throw new RuntimeException("Error fetching comparative analysis.", e);
         }
     }
