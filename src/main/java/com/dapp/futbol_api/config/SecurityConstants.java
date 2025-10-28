@@ -2,7 +2,11 @@ package com.dapp.futbol_api.config;
 
 public final class SecurityConstants {
 
-    public static final String[] WHITE_LIST_URLS = {
+    private SecurityConstants() {
+        throw new IllegalStateException("Utility class");
+    }
+
+    protected static final String[] WHITE_LIST_URLS = {
             // Root endpoint
             "/",
             // Public authentication endpoints
@@ -15,7 +19,7 @@ public final class SecurityConstants {
             "/actuator/**"
     };
 
-    public static final String[] USER_LIST_URLS = {
+    protected static final String[] USER_LIST_URLS = {
             // Scraping service endpoints
             "/api/player",
             "/api/player/**",
