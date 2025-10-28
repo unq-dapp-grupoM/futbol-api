@@ -10,10 +10,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
 public class AnalysisServiceException extends RuntimeException {
 
-    public AnalysisServiceException(String message) {
-        super(message);
-    }
-
     public AnalysisServiceException(String message, Throwable cause) {
         super(message, cause);
     }

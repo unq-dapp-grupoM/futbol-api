@@ -3,7 +3,7 @@ package com.dapp.futbol_api.model.dto;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AnalysisRequestDTOTest {
+class AnalysisRequestDTOTest {
 
     @Test
     void testNoArgsConstructorAndSetters() {
@@ -53,7 +53,7 @@ public class AnalysisRequestDTOTest {
         assertNotEquals(dto1, dto4, "Objects with different opponent should not be equal.");
         assertNotEquals(dto1, dto5, "Objects with different isHome should not be equal.");
         assertNotEquals(dto1, dto6, "Objects with different position should not be equal.");
-        assertNotEquals(dto1, null, "Object should not be equal to null.");
+        assertNotEquals(null, dto1, "Object should not be equal to null.");
         assertNotEquals(dto1, new Object(), "Object should not be equal to an object of a different class.");
     }
 

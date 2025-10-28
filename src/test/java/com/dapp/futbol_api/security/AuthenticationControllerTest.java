@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AuthenticationController.class)
 @Import(SecurityConfig.class) // Explicitly import your security configuration
 @TestPropertySource(properties = "api.security.key=test-api-key") // Provide dummy property for ApiKeyAuthFilter
-public class AuthenticationControllerTest {
+class AuthenticationControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

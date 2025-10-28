@@ -21,7 +21,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 @RestClientTest(TeamService.class)
-public class TeamServiceTest {
+class TeamServiceTest {
 
     @Autowired
     private TeamService teamService;
@@ -74,8 +74,6 @@ public class TeamServiceTest {
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockResponse), MediaType.APPLICATION_JSON));
 
         // Act & Assert
-        // This test expects RuntimeException because getForObject(url, List.class) with an empty JSON array
-        // can cause an issue that gets caught by the generic `catch (Exception e)`.
         assertThrows(RuntimeException.class, () -> teamService.getTeamInfoByName(teamName));
         mockServer.verify();
     }

@@ -22,7 +22,7 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 @RestClientTest(AnalysisService.class)
-public class AnalysisServiceTest {
+class AnalysisServiceTest {
 
     @Autowired
     private AnalysisService analysisService;
@@ -132,7 +132,6 @@ public class AnalysisServiceTest {
     @Test
     void testGetPerformancePrediction_ServiceError() {
         // Arrange
-        String playerName = "Error Player";
         String url = baseUrl + "/api/analysis/Error%20Player/prediction?opponent=Any&isHome=false&position=GK";
 
         mockServer.expect(requestTo(url))

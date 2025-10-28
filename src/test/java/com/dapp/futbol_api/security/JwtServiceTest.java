@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class JwtServiceTest {
+class JwtServiceTest {
 
     private final String testSecretKey = "bXlzdXBlcnNlY3JldGtleWZvcnRlc3RpbmdwdXJwb3Nlc2FuZGl0c2hvdWxkYmVsb25nZW5vdWdo"; // A valid Base64 key
 

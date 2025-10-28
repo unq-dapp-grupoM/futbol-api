@@ -21,7 +21,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 @RestClientTest(PlayerService.class)
-public class PlayerServiceTest {
+class PlayerServiceTest {
 
     @Autowired
     private PlayerService playerService;
