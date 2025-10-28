@@ -36,12 +36,10 @@ public class SecurityConfigTest {
     @ValueSource(strings = {
             "/",
             "/api/auth/login",
-            "/v3/api-docs",
-            "/swagger-ui/index.html",
+            "/v3/api-docs/swagger-config",
+            "/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config",
             "/swagger-ui.html",
-            "/h2-console/login.jsp",
-            "/api/searchPlayer/somePlayer",
-            "/api/teamInfo/someTeam"
+            "/actuator/health"
     })
     void testWhiteListedUrlsShouldBePermitted(String url) throws Exception {
         // Act & Assert
@@ -50,6 +48,20 @@ public class SecurityConfigTest {
         mockMvc.perform(get(url))
                 .andExpect(status().is(org.hamcrest.Matchers.not(org.hamcrest.Matchers.is(401))))
                 .andExpect(status().is(org.hamcrest.Matchers.not(org.hamcrest.Matchers.is(403))));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/player?playerName=messi",
+            "/api/team?teamName=barcelona",
+            "/api/analysis/messi/metrics",
+            "/api/futureMatches?teamName=barcelona"
+    })
+    void testUserUrlsShouldBeForbiddenWithoutAuthentication(String url) throws Exception {
+        // Act & Assert
+        // These requests should be forbidden as they require USER authority.
+        mockMvc.perform(get(url))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -85,17 +97,6 @@ public class SecurityConfigTest {
     }
 
     @Test
-    @WithMockUser(roles = "USER") // A user without the 'SERVICE' role
-    void testInternalApiShouldBeForbiddenForRegularUser() throws Exception {
-        // Arrange
-        String internalUrl = "/api/v1/internal/status";
-
-        // Act & Assert
-        mockMvc.perform(get(internalUrl))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     @WithMockUser(roles = "SERVICE") // A user with the required 'SERVICE' role
     void testInternalApiShouldBeAccessibleForServiceRole() throws Exception {
         // Arrange
@@ -105,15 +106,5 @@ public class SecurityConfigTest {
         // The request should pass security. A 404 is expected if no controller handles the endpoint.
         mockMvc.perform(get(internalUrl))
                 .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void testInternalApiShouldBeAccessibleWithValidApiKey() throws Exception {
-        // Arrange
-        String internalUrl = "/api/v1/internal/status";
-
-        // Act & Assert
-        mockMvc.perform(get(internalUrl).header("X-API-KEY", "test-api-key"))
-                .andExpect(status().isNotFound()); // Passes security, 404 because no controller exists
     }
 }

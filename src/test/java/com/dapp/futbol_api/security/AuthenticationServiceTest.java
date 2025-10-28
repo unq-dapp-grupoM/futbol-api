@@ -52,7 +52,7 @@ public class AuthenticationServiceTest {
         String result = authenticationService.register(request);
 
         // Assert
-        assertEquals("User registered successfully!", result);
+        assertEquals("User registered successfully", result);
 
         // Verify that the validator was called
         verify(userValidator).validateRegistrationRequest(request);

@@ -6,8 +6,8 @@ import com.dapp.futbol_api.service.PlayerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.when;
@@ -21,10 +21,10 @@ public class PlayerControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private PlayerService playerService;
 
-    @MockBean
+    @MockitoBean
     private JwtService jwtService;
 
     @Test
@@ -39,7 +39,7 @@ public class PlayerControllerTest {
         when(playerService.getPlayerInfoByName(playerName)).thenReturn(mockPlayer);
 
         // Act & Assert
-        mockMvc.perform(get("/api/searchPlayer/playerName").param("playerName", playerName))
+        mockMvc.perform(get("/api/player").param("playerName", playerName))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value(playerName))
                 .andExpect(jsonPath("$.currentTeam").value("Inter Miami"));
@@ -53,7 +53,7 @@ public class PlayerControllerTest {
         when(playerService.getPlayerInfoByName(playerName)).thenThrow(new IllegalArgumentException("Player not found"));
 
         // Act & Assert
-        mockMvc.perform(get("/api/searchPlayer/playerName").param("playerName", playerName))
+        mockMvc.perform(get("/api/player").param("playerName", playerName))
                 .andExpect(status().isBadRequest());
     }
 }
