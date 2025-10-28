@@ -1,5 +1,6 @@
 package com.dapp.futbol_api.service;
 
+import com.dapp.futbol_api.exception.AnalysisServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,11 +59,11 @@ public class AnalysisService extends AbstractWebService {
                     e);
         } catch (HttpClientErrorException e) {
             log.debug("Client error fetching metrics for player '{}'. Status: {}, Body: {}", decodedPlayerName, e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException(
+            throw new AnalysisServiceException(
                     "Error communicating with analysis service for player '" + decodedPlayerName + "'.", e);
         } catch (Exception e) {
             log.error("Unexpected error fetching metrics for '{}'", decodedPlayerName, e);
-            throw new RuntimeException("Unexpected error while fetching player metrics.", e);
+            throw new AnalysisServiceException("Unexpected error while fetching player metrics.", e);
         }
     }
 
@@ -104,10 +105,10 @@ public class AnalysisService extends AbstractWebService {
                     e);
         } catch (HttpClientErrorException e) {
             log.debug("Client error fetching prediction for player '{}'. Status: {}, Body: {}", decodedPlayerName, e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("Error generating prediction for player '" + decodedPlayerName + "'.", e);
+            throw new AnalysisServiceException("Error generating prediction for player '" + decodedPlayerName + "'.", e);
         } catch (Exception e) {
             log.error("Unexpected error generating prediction for '{}'", decodedPlayerName, e);
-            throw new RuntimeException("Unexpected error while generating performance prediction.", e);
+            throw new AnalysisServiceException("Unexpected error while generating performance prediction.", e);
         }
     }
 
@@ -141,7 +142,7 @@ public class AnalysisService extends AbstractWebService {
                     e);
         } catch (Exception e) {
             log.error("Error converting data for '{}'", decodedPlayerName, e);
-            throw new RuntimeException("Error converting player data to analysis format.", e);
+            throw new AnalysisServiceException("Error converting player data to analysis format.", e);
         }
     }
 
@@ -172,7 +173,7 @@ public class AnalysisService extends AbstractWebService {
             return response;
         } catch (Exception e) {
             log.error("Error fetching comparative analysis for '{}'", decodedPlayerName, e);
-            throw new RuntimeException("Error fetching comparative analysis.", e);
+            throw new AnalysisServiceException("Error fetching comparative analysis.", e);
         }
     }
 
