@@ -20,14 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class PlayerController {
 
+  private static final String NEW_LINE_REGEX = "[\n\r]";
   private final PlayerService playerService;
 
   @Operation(summary = "Search and get player information by name", description = "Searches for a player by name on WhoScored and extracts their details. AUTHENTICATION REQUIRED!")
   @GetMapping("/player")
   public ResponseEntity<Object> getPlayerInfoByName(
       @Parameter(description = "Name of the player to search for.", example = "Lionel Messi") @RequestParam("playerName") String playerName) {
-    playerName = playerName.replaceAll("[\n\r]", "_");
-    Object player = playerService.getPlayerInfoByName(playerName);
+    final String sanitizedPlayerName = sanitize(playerName);
+    Object player = playerService.getPlayerInfoByName(sanitizedPlayerName);
     return ResponseEntity.ok(player);
+  }
+
+  private String sanitize(String input) {
+    return input.replaceAll(NEW_LINE_REGEX, "_");
   }
 }

@@ -16,14 +16,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AnalysisController {
 
+    private static final String NEW_LINE_REGEX = "[\n\r]";
     private final AnalysisService analysisService;
 
     @Operation(summary = "Get player performance metrics", description = "Retrieves comprehensive performance metrics for a player")
     @GetMapping("/{playerName}/metrics")
     public ResponseEntity<Object> getPlayerMetrics(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
-        playerName = playerName.replaceAll("[\n\r]", "_");
-        Object metrics = analysisService.getPlayerMetrics(playerName);
+        final String sanitizedPlayerName = sanitize(playerName);
+        Object metrics = analysisService.getPlayerMetrics(sanitizedPlayerName);
         return ResponseEntity.ok(metrics);
     }
 
@@ -35,8 +36,8 @@ public class AnalysisController {
             @Parameter(description = "Whether the player is home", example = "true") @RequestParam("isHome") boolean isHome,
             @Parameter(description = "Player position", example = "FW") @RequestParam("position") String position) {
 
-        playerName = playerName.replaceAll("[\n\r]", "_");
-        Object prediction = analysisService.getPerformancePrediction(playerName, opponent, isHome, position);
+        final String sanitizedPlayerName = sanitize(playerName);
+        Object prediction = analysisService.getPerformancePrediction(sanitizedPlayerName, opponent, isHome, position);
         return ResponseEntity.ok(prediction);
     }
 
@@ -44,8 +45,8 @@ public class AnalysisController {
     @PostMapping("/{playerName}/convert-data")
     public ResponseEntity<Object> convertPlayerData(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
-        playerName = playerName.replaceAll("[\n\r]", "_");
-        Object result = analysisService.convertPlayerData(playerName);
+        final String sanitizedPlayerName = sanitize(playerName);
+        Object result = analysisService.convertPlayerData(sanitizedPlayerName);
         return ResponseEntity.ok(result);
     }
 
@@ -53,8 +54,12 @@ public class AnalysisController {
     @GetMapping("/{playerName}/comparison")
     public ResponseEntity<Object> getComparativeAnalysis(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
-        playerName = playerName.replaceAll("[\n\r]", "_");
-        Object analysis = analysisService.getComparativeAnalysis(playerName);
+        final String sanitizedPlayerName = sanitize(playerName);
+        Object analysis = analysisService.getComparativeAnalysis(sanitizedPlayerName);
         return ResponseEntity.ok(analysis);
+    }
+
+    private String sanitize(String input) {
+        return input.replaceAll(NEW_LINE_REGEX, "_");
     }
 }
