@@ -32,17 +32,17 @@ public class AnalysisService extends AbstractWebService {
     /**
      * Gets performance metrics for a player.
      */
-    public Object getPlayerMetrics(String playerName) {
+    public Object getPlayerPerformanceMetrics(String playerName) {
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
         String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
-                .path("/api/analysis/{player}/metrics")
+                .path("/api/analysis/{player}/performanceMetrics")
                 .buildAndExpand(encodePathSegment(decodedPlayerName))
                 .toUriString();
 
-        return performApiCall(url, HttpMethod.GET, decodedPlayerName, "metrics analysis",
-                "Unexpected error while fetching player metrics.");
+        return performApiCall(url, HttpMethod.GET, decodedPlayerName, "performance metrics analysis",
+                "Unexpected error while fetching player performance metrics.");
     }
 
     /**

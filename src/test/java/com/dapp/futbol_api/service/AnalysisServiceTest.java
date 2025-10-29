@@ -52,7 +52,7 @@ class AnalysisServiceTest {
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockMetrics), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPlayerMetrics(playerName);
+        Object result = analysisService.getPlayerPerformanceMetrics(playerName);
 
         // Assert
         assertNotNull(result);
@@ -71,7 +71,7 @@ class AnalysisServiceTest {
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> analysisService.getPlayerMetrics(playerName));
+        assertThrows(IllegalArgumentException.class, () -> analysisService.getPlayerPerformanceMetrics(playerName));
         mockServer.verify();
     }
 
@@ -87,7 +87,7 @@ class AnalysisServiceTest {
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockResponse), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPlayerMetrics(playerName);
+        Object result = analysisService.getPlayerPerformanceMetrics(playerName);
 
         // Assert
         assertNotNull(result);
@@ -105,7 +105,7 @@ class AnalysisServiceTest {
                 .andRespond(withBadRequest().body("Invalid request"));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> analysisService.getPlayerMetrics(playerName));
+        assertThrows(RuntimeException.class, () -> analysisService.getPlayerPerformanceMetrics(playerName));
         mockServer.verify();
     }
 
