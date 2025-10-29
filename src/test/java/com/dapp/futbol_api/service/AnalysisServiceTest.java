@@ -44,7 +44,7 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_Success() throws JsonProcessingException {
         // Arrange
         String playerName = "Lionel Messi";
-        String url = baseUrl + "/api/analysis/Lionel%20Messi/metrics";
+        String url = baseUrl + "/api/analysis/Lionel%20Messi/performanceMetrics";
         Map<String, Object> mockMetrics = Collections.singletonMap("goals", 900);
 
         mockServer.expect(requestTo(url))
@@ -65,7 +65,7 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_PlayerNotFound() {
         // Arrange
         String playerName = "Unknown Player";
-        String url = baseUrl + "/api/analysis/Unknown%20Player/metrics";
+        String url = baseUrl + "/api/analysis/Unknown%20Player/performanceMetrics";
 
         mockServer.expect(requestTo(url))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
@@ -79,7 +79,7 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_HandlesListResponse() throws JsonProcessingException {
         // Arrange
         String playerName = "List Player";
-        String url = baseUrl + "/api/analysis/List%20Player/metrics";
+        String url = baseUrl + "/api/analysis/List%20Player/performanceMetrics";
         Map<String, Object> mockMetric = Collections.singletonMap("assists", 10);
         List<Map<String, Object>> mockResponse = Collections.singletonList(mockMetric);
 
@@ -99,7 +99,7 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_ClientError() {
         // Arrange
         String playerName = "Error Player";
-        String url = baseUrl + "/api/analysis/Error%20Player/metrics";
+        String url = baseUrl + "/api/analysis/Error%20Player/performanceMetrics";
 
         mockServer.expect(requestTo(url))
                 .andRespond(withBadRequest().body("Invalid request"));
