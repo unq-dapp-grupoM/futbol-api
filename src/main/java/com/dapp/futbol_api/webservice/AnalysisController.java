@@ -21,7 +21,7 @@ public class AnalysisController {
     @Operation(summary = "Get player performance metrics", description = "Retrieves comprehensive performance metrics for a player")
     @GetMapping("/{playerName}/metrics")
     public ResponseEntity<Object> getPlayerMetrics(
-            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName) {
+            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
         playerName = playerName.replaceAll("[\n\r]", "_");
         Object metrics = analysisService.getPlayerMetrics(playerName);
         return ResponseEntity.ok(metrics);
@@ -30,10 +30,10 @@ public class AnalysisController {
     @Operation(summary = "Get performance prediction", description = "Predicts player performance for next match considering opponent, venue and position")
     @GetMapping("/{playerName}/prediction")
     public ResponseEntity<Object> getPerformancePrediction(
-            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName,
-            @Parameter(description = "Opponent team name", example = "Real Madrid") @RequestParam String opponent,
-            @Parameter(description = "Whether the player is home", example = "true") @RequestParam boolean isHome,
-            @Parameter(description = "Player position", example = "FW") @RequestParam String position) {
+            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName,
+            @Parameter(description = "Opponent team name", example = "Real Madrid") @RequestParam("opponent") String opponent,
+            @Parameter(description = "Whether the player is home", example = "true") @RequestParam("isHome") boolean isHome,
+            @Parameter(description = "Player position", example = "FW") @RequestParam("position") String position) {
 
         playerName = playerName.replaceAll("[\n\r]", "_");
         Object prediction = analysisService.getPerformancePrediction(playerName, opponent, isHome, position);
@@ -43,7 +43,7 @@ public class AnalysisController {
     @Operation(summary = "Convert player data to analysis format", description = "Converts scraped player data to analysis-ready format")
     @PostMapping("/{playerName}/convert-data")
     public ResponseEntity<Object> convertPlayerData(
-            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName) {
+            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
         playerName = playerName.replaceAll("[\n\r]", "_");
         Object result = analysisService.convertPlayerData(playerName);
         return ResponseEntity.ok(result);
@@ -52,7 +52,7 @@ public class AnalysisController {
     @Operation(summary = "Get comparative analysis", description = "Retrieves comparative analysis of player performance across different periods")
     @GetMapping("/{playerName}/comparison")
     public ResponseEntity<Object> getComparativeAnalysis(
-            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable String playerName) {
+            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
         playerName = playerName.replaceAll("[\n\r]", "_");
         Object analysis = analysisService.getComparativeAnalysis(playerName);
         return ResponseEntity.ok(analysis);
