@@ -37,10 +37,8 @@ public class TeamService extends AbstractWebService {
 
             return teamsList.get(0);
         } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Team '{}' not found by scraper service. Status: {}", teamName, e.getStatusCode());
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found.", e);
         } catch (Exception e) {
-            log.error("Error fetching team data for '{}'", teamName, e);
             throw new TeamServiceException("Error fetching team data.", e);
         }
     }
@@ -56,10 +54,8 @@ public class TeamService extends AbstractWebService {
             return restTemplate.getForObject(url, List.class);
 
         } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Team '{}' not found by scraper service for future matches. Status: {}", teamName, e.getStatusCode());
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found for future matches.", e);
         } catch (Exception e) {
-            log.error("Error fetching future matches for '{}'", teamName, e);
             throw new TeamServiceException("Error fetching future matches.", e);
         }
     }

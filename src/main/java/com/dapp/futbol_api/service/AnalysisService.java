@@ -130,18 +130,14 @@ public class AnalysisService extends AbstractWebService {
             return response;
 
         } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Player '{}' not found for {}. Status: {}", playerName, operation, e.getStatusCode());
             throw new IllegalArgumentException(
                     "Player with name '" + playerName + "' not found for " + operation + ".", e);
 
         } catch (HttpClientErrorException e) {
-            log.debug("Client error during {} for player '{}'. Status: {}, Body: {}", operation, playerName,
-                    e.getStatusCode(), e.getResponseBodyAsString());
             throw new AnalysisServiceException(
                     "Error communicating with analysis service for player '" + playerName + "'.", e);
 
         } catch (Exception e) {
-            log.error("Unexpected error during {} for '{}'", operation, playerName, e);
             throw new AnalysisServiceException(errorMsg, e);
         }
     }

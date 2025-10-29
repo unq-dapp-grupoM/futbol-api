@@ -37,10 +37,8 @@ public class PlayerService extends AbstractWebService {
 
             return playersList.get(0);
         } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Player '{}' not found by scraper service. Status: {}", playerName, e.getStatusCode());
             throw new IllegalArgumentException("Player with name '" + playerName + "' not found.", e);
         } catch (Exception e) {
-            log.error("Error fetching player data for '{}'", playerName, e);
             throw new PlayerServiceException("Error fetching player data.", e);
         }
     }
