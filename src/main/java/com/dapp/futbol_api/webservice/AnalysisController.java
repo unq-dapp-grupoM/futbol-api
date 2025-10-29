@@ -37,7 +37,10 @@ public class AnalysisController {
             @Parameter(description = "Player position", example = "FW") @RequestParam("position") String position) {
 
         final String sanitizedPlayerName = sanitize(playerName);
-        Object prediction = analysisService.getPerformancePrediction(sanitizedPlayerName, opponent, isHome, position);
+        final String sanitizedOpponent = sanitize(opponent);
+        final String sanitizedPosition = sanitize(position);
+
+        Object prediction = analysisService.getPerformancePrediction(sanitizedPlayerName, sanitizedOpponent, isHome, sanitizedPosition);
         return ResponseEntity.ok(prediction);
     }
 
