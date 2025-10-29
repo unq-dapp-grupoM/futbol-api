@@ -13,7 +13,7 @@ public abstract class AbstractWebService {
 
     protected final RestTemplate restTemplate;
 
-    public AbstractWebService(RestTemplateBuilder restTemplateBuilder, String scraperServiceUrl) {
+    protected AbstractWebService(RestTemplateBuilder restTemplateBuilder, String scraperServiceUrl) {
         log.info("Initializing WebService with base URL: {}", scraperServiceUrl);
 
         // Configure RestTemplate to NOT encode URLs automatically

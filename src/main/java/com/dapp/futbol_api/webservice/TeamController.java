@@ -20,13 +20,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class TeamController {
 
+    private static final String NEW_LINE_REGEX = "[\n\r]";
     private final TeamService teamService;
 
     @Operation(summary = "Search and get team info", description = "Find a team and your players. AUTHENTICATION REQUIRED!")
     @GetMapping("/team")
     public ResponseEntity<Object> getTeamInfoByName(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
-        Object team = teamService.getTeamInfoByName(teamName);
+        final String sanitizedTeamName = sanitize(teamName);
+        Object team = teamService.getTeamInfoByName(sanitizedTeamName);
         return ResponseEntity.ok(team);
     }
 
@@ -34,7 +36,12 @@ public class TeamController {
     @GetMapping("/futureMatches")
     public ResponseEntity<Object> getFutureMatches(
             @Parameter(description = "Name of the team to search for.", example = "Real Madrid") @RequestParam("teamName") String teamName) {
-        Object matches = teamService.getFutureMatches(teamName);
+        final String sanitizedTeamName = sanitize(teamName);
+        Object matches = teamService.getFutureMatches(sanitizedTeamName);
         return ResponseEntity.ok(matches);
+    }
+
+    private String sanitize(String input) {
+        return input.replaceAll(NEW_LINE_REGEX, "_");
     }
 }

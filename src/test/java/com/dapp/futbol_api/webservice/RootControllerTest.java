@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(RootController.class)
 @Import(SecurityConfig.class)
 @TestPropertySource(properties = "api.security.key=test-api-key")
-public class RootControllerTest {
+class RootControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

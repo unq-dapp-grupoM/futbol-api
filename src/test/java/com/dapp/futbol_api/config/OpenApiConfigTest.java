@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class OpenApiConfigTest {
+class OpenApiConfigTest {
 
     @Test
     void testOpenApiDefinitionAnnotationIsPresentAndCorrectlyConfigured() {

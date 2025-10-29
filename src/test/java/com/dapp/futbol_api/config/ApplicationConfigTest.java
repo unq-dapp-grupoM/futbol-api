@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ApplicationConfigTest {
+class ApplicationConfigTest {
 
     @Mock
     private UserRepository userRepository;

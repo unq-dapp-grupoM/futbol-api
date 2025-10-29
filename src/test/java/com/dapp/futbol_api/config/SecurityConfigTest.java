@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(SecurityConfig.class)
 // Provide a dummy value for the api key property required by ApiKeyAuthFilter
 @TestPropertySource(properties = "api.security.key=test-api-key")
-public class SecurityConfigTest {
+class SecurityConfigTest {
     
 
     @Autowired
