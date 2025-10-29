@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -35,36 +36,13 @@ public class AnalysisService extends AbstractWebService {
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
-        try {
-            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
-                    .path("/api/analysis/{player}/metrics")
-                    .buildAndExpand(encodePathSegment(decodedPlayerName))
-                    .toUriString();
+        String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
+                .path("/api/analysis/{player}/metrics")
+                .buildAndExpand(encodePathSegment(decodedPlayerName))
+                .toUriString();
 
-            log.debug("Calling metrics URL: {}", url);
-
-            // Manejar tanto array como objeto individual
-            Object response = restTemplate.getForObject(url, Object.class);
-
-            // Si es una lista, extraer el primer elemento
-            if (response instanceof List) {
-                List<?> list = (List<?>) response;
-                return list.isEmpty() ? null : list.get(0);
-            }
-
-            return response;
-        } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Player '{}' not found for metrics analysis. Status: {}", decodedPlayerName, e.getStatusCode());
-            throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for analysis.",
-                    e);
-        } catch (HttpClientErrorException e) {
-            log.debug("Client error fetching metrics for player '{}'. Status: {}, Body: {}", decodedPlayerName, e.getStatusCode(), e.getResponseBodyAsString());
-            throw new AnalysisServiceException(
-                    "Error communicating with analysis service for player '" + decodedPlayerName + "'.", e);
-        } catch (Exception e) {
-            log.error("Unexpected error fetching metrics for '{}'", decodedPlayerName, e);
-            throw new AnalysisServiceException("Unexpected error while fetching player metrics.", e);
-        }
+        return performApiCall(url, HttpMethod.GET, decodedPlayerName, "metrics analysis",
+                "Unexpected error while fetching player metrics.");
     }
 
     /**
@@ -78,38 +56,16 @@ public class AnalysisService extends AbstractWebService {
         log.info("Requesting performance prediction for player '{}' vs '{}' from {}",
                 decodedPlayerName, decodedOpponent, scraperServiceUrl);
 
-        try {
-            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
-                    .path("/api/analysis/{player}/prediction")
-                    .queryParam("opponent", encodeQueryParam(decodedOpponent))
-                    .queryParam("isHome", isHome)
-                    .queryParam("position", encodeQueryParam(decodedPosition))
-                    .buildAndExpand(encodePathSegment(decodedPlayerName))
-                    .toUriString();
+        String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
+                .path("/api/analysis/{player}/prediction")
+                .queryParam("opponent", encodeQueryParam(decodedOpponent))
+                .queryParam("isHome", isHome)
+                .queryParam("position", encodeQueryParam(decodedPosition))
+                .buildAndExpand(encodePathSegment(decodedPlayerName))
+                .toUriString();
 
-            log.debug("Calling prediction URL: {}", url);
-
-            // Manejar tanto array como objeto individual
-            Object response = restTemplate.getForObject(url, Object.class);
-
-            // Si es una lista, extraer el primer elemento
-            if (response instanceof List) {
-                List<?> list = (List<?>) response;
-                return list.isEmpty() ? null : list.get(0);
-            }
-
-            return response;
-        } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Player '{}' not found for prediction. Status: {}", decodedPlayerName, e.getStatusCode());
-            throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for prediction.",
-                    e);
-        } catch (HttpClientErrorException e) {
-            log.debug("Client error fetching prediction for player '{}'. Status: {}, Body: {}", decodedPlayerName, e.getStatusCode(), e.getResponseBodyAsString());
-            throw new AnalysisServiceException("Error generating prediction for player '" + decodedPlayerName + "'.", e);
-        } catch (Exception e) {
-            log.error("Unexpected error generating prediction for '{}'", decodedPlayerName, e);
-            throw new AnalysisServiceException("Unexpected error while generating performance prediction.", e);
-        }
+        return performApiCall(url, HttpMethod.GET, decodedPlayerName, "prediction",
+                "Unexpected error while generating performance prediction.");
     }
 
     /**
@@ -126,24 +82,13 @@ public class AnalysisService extends AbstractWebService {
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Converting player data for '{}' to analysis format using {}", decodedPlayerName, scraperServiceUrl);
 
-        try {
-            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
-                    .path("/api/analysis/{player}/convert-data")
-                    .buildAndExpand(encodePathSegment(decodedPlayerName))
-                    .toUriString();
+        String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
+                .path("/api/analysis/{player}/convert-data")
+                .buildAndExpand(encodePathSegment(decodedPlayerName))
+                .toUriString();
 
-            log.debug("Calling convert-data URL: {}", url);
-
-            Object result = restTemplate.postForObject(url, null, Object.class);
-            return result != null ? result : Map.of("message", "Conversion completed for " + decodedPlayerName);
-        } catch (HttpClientErrorException.NotFound e) {
-            log.debug("Player '{}' not found for data conversion. Status: {}", decodedPlayerName, e.getStatusCode());
-            throw new IllegalArgumentException("Player with name '" + decodedPlayerName + "' not found for conversion.",
-                    e);
-        } catch (Exception e) {
-            log.error("Error converting data for '{}'", decodedPlayerName, e);
-            throw new AnalysisServiceException("Error converting player data to analysis format.", e);
-        }
+        return performApiCall(url, HttpMethod.POST, decodedPlayerName, "data conversion",
+                "Error converting player data to analysis format.");
     }
 
     /**
@@ -153,27 +98,51 @@ public class AnalysisService extends AbstractWebService {
         String decodedPlayerName = decodeUrlParameter(playerName);
         log.info("Requesting comparative analysis for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
+        String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
+                .path("/api/analysis/{player}/comparison")
+                .buildAndExpand(encodePathSegment(decodedPlayerName))
+                .toUriString();
+
+        return performApiCall(url, HttpMethod.GET, decodedPlayerName, "comparative analysis",
+                "Error fetching comparative analysis.");
+    }
+
+    /**
+     * Performs the actual API call and handles common responses and exceptions.
+     */
+    private Object performApiCall(String url, HttpMethod method, String playerName, String operation, String errorMsg) {
+        log.debug("Calling URL for {}: {}", operation, url);
         try {
-            String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
-                    .path("/api/analysis/{player}/comparison")
-                    .buildAndExpand(encodePathSegment(decodedPlayerName))
-                    .toUriString();
+            Object response;
+            if (method == HttpMethod.POST) {
+                response = restTemplate.postForObject(url, null, Object.class);
+                if (response == null) {
+                    return Map.of("message", "Operation completed for " + playerName);
+                }
+            } else { // Default to GET
+                response = restTemplate.getForObject(url, Object.class);
+            }
 
-            log.debug("Calling comparison URL: {}", url);
-
-            // Manejar tanto array como objeto individual
-            Object response = restTemplate.getForObject(url, Object.class);
-
-            // Si es una lista, extraer el primer elemento
             if (response instanceof List) {
                 List<?> list = (List<?>) response;
                 return list.isEmpty() ? null : list.get(0);
             }
-
             return response;
+
+        } catch (HttpClientErrorException.NotFound e) {
+            log.debug("Player '{}' not found for {}. Status: {}", playerName, operation, e.getStatusCode());
+            throw new IllegalArgumentException(
+                    "Player with name '" + playerName + "' not found for " + operation + ".", e);
+
+        } catch (HttpClientErrorException e) {
+            log.debug("Client error during {} for player '{}'. Status: {}, Body: {}", operation, playerName,
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new AnalysisServiceException(
+                    "Error communicating with analysis service for player '" + playerName + "'.", e);
+
         } catch (Exception e) {
-            log.error("Error fetching comparative analysis for '{}'", decodedPlayerName, e);
-            throw new AnalysisServiceException("Error fetching comparative analysis.", e);
+            log.error("Unexpected error during {} for '{}'", operation, playerName, e);
+            throw new AnalysisServiceException(errorMsg, e);
         }
     }
 
