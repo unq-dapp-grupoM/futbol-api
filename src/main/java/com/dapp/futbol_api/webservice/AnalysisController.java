@@ -20,7 +20,7 @@ public class AnalysisController {
     private final AnalysisService analysisService;
 
     @Operation(summary = "Get player performance metrics", description = "Retrieves comprehensive performance metrics for a player")
-    @GetMapping("/{playerName}/metrics")
+    @GetMapping("/{playerName}/performanceMetrics")
     public ResponseEntity<Object> getPlayerMetrics(
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
         final String sanitizedPlayerName = sanitize(playerName);
@@ -40,7 +40,8 @@ public class AnalysisController {
         final String sanitizedOpponent = sanitize(opponent);
         final String sanitizedPosition = sanitize(position);
 
-        Object prediction = analysisService.getPerformancePrediction(sanitizedPlayerName, sanitizedOpponent, isHome, sanitizedPosition);
+        Object prediction = analysisService.getPerformancePrediction(sanitizedPlayerName, sanitizedOpponent, isHome,
+                sanitizedPosition);
         return ResponseEntity.ok(prediction);
     }
 

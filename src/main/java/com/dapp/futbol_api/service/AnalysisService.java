@@ -37,7 +37,7 @@ public class AnalysisService extends AbstractWebService {
         log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
 
         String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
-                .path("/api/analysis/{player}/metrics")
+                .path("/api/analysis/{player}/performanceMetrics")
                 .buildAndExpand(encodePathSegment(decodedPlayerName))
                 .toUriString();
 
