@@ -1,12 +1,17 @@
 package com.dapp.futbol_api.webservice;
 
+import com.dapp.futbol_api.model.QueryType;
+import com.dapp.futbol_api.model.User;
 import com.dapp.futbol_api.service.AnalysisService;
+import com.dapp.futbol_api.service.QueryHistoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,12 +23,16 @@ public class AnalysisController {
 
     private static final String NEW_LINE_REGEX = "[\n\r]";
     private final AnalysisService analysisService;
+    private final QueryHistoryService queryHistoryService;
 
     @Operation(summary = "Get player performance metrics", description = "Retrieves comprehensive performance metrics for a player")
     @GetMapping("/{playerName}/performanceMetrics")
     public ResponseEntity<Object> getPlayerPerformanceMetrics(
-            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
+            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName,
+            @AuthenticationPrincipal UserDetails userDetails) {
         final String sanitizedPlayerName = sanitize(playerName);
+        // Cast UserDetails to the custom User entity to access the ID and convert it to Long
+        queryHistoryService.saveQuery(((User) userDetails).getId().longValue(), sanitizedPlayerName, QueryType.PERFORMANCE);
         Object performanceMetrics = analysisService.getPlayerPerformanceMetrics(sanitizedPlayerName);
         return ResponseEntity.ok(performanceMetrics);
     }
@@ -34,13 +43,16 @@ public class AnalysisController {
             @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName,
             @Parameter(description = "Opponent team name", example = "Real Madrid") @RequestParam("opponent") String opponent,
             @Parameter(description = "Whether the player is home", example = "true") @RequestParam("isHome") boolean isHome,
-            @Parameter(description = "Player position", example = "FW") @RequestParam("position") String position) {
+            @Parameter(description = "Player position", example = "FW") @RequestParam("position") String position,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         final String sanitizedPlayerName = sanitize(playerName);
         final String sanitizedOpponent = sanitize(opponent);
         final String sanitizedPosition = sanitize(position);
 
+        queryHistoryService.saveQuery(((User) userDetails).getId().longValue(), sanitizedPlayerName, QueryType.PREDICTION);
         Object prediction = analysisService.getPerformancePrediction(sanitizedPlayerName, sanitizedOpponent, isHome, sanitizedPosition);
+
         return ResponseEntity.ok(prediction);
     }
 
@@ -56,8 +68,10 @@ public class AnalysisController {
     @Operation(summary = "Get comparative analysis", description = "Retrieves comparative analysis of player performance across different periods")
     @GetMapping("/{playerName}/comparison")
     public ResponseEntity<Object> getComparativeAnalysis(
-            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName) {
+            @Parameter(description = "Name of the player", example = "Lionel Messi") @PathVariable("playerName") String playerName,
+            @AuthenticationPrincipal UserDetails userDetails) {
         final String sanitizedPlayerName = sanitize(playerName);
+        queryHistoryService.saveQuery(((User) userDetails).getId().longValue(), sanitizedPlayerName, QueryType.COMPARISON);
         Object analysis = analysisService.getComparativeAnalysis(sanitizedPlayerName);
         return ResponseEntity.ok(analysis);
     }
