@@ -15,8 +15,6 @@ public class UserValidator {
     private static final String PASSWORD_REGEX = "^(?=.*\\d).{6,}$";
     private static final int MAX_PASSWORD_LENGTH = 128;
 
-    public UserValidator() {
-    }
 
     public void validateRegistrationRequest(RegisterRequest request) {
         // Normalize email before validating
