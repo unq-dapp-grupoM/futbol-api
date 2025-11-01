@@ -16,7 +16,8 @@ public final class SecurityConstants {
             "/swagger-ui/**",
             "/swagger-ui.html",
             // Path for Render's Health Check
-            "/actuator/**"
+            "/actuator/**",
+            "/h2-console/**"
     };
 
     protected static final String[] USER_LIST_URLS = {

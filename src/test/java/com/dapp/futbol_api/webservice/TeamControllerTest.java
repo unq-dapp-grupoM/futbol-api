@@ -5,6 +5,7 @@ import com.dapp.futbol_api.security.JwtService;
 import com.dapp.futbol_api.service.TeamService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.dapp.futbol_api.security.SimpleUserDetailsService;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -29,6 +30,9 @@ class TeamControllerTest {
 
     @MockitoBean
     private JwtService jwtService;
+
+    @MockitoBean
+    private SimpleUserDetailsService userDetailsService;
 
     @Test
     @WithMockUser

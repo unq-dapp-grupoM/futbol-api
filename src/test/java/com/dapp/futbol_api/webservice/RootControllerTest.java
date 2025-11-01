@@ -2,11 +2,11 @@ package com.dapp.futbol_api.webservice;
 
 import com.dapp.futbol_api.config.SecurityConfig;
 import com.dapp.futbol_api.security.JwtService;
+import com.dapp.futbol_api.security.SimpleUserDetailsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,7 +28,7 @@ class RootControllerTest {
     private JwtService jwtService;
 
     @MockitoBean
-    private UserDetailsService userDetailsService;
+    private SimpleUserDetailsService userDetailsService;
 
     @Test
     void testHomeEndpointIsPublicAndReturnsCorrectMessage() throws Exception {
