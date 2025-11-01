@@ -1,6 +1,8 @@
 package com.dapp.futbol_api.webservice;
 
+import com.dapp.futbol_api.security.JwtAuthenticationFilter;
 import com.dapp.futbol_api.security.JwtService;
+import com.dapp.futbol_api.security.SimpleUserDetailsService;
 import com.dapp.futbol_api.model.dto.PlayerDTO;
 import com.dapp.futbol_api.service.PlayerService;
 import org.junit.jupiter.api.Test;
@@ -27,6 +29,12 @@ class PlayerControllerTest {
     @MockitoBean
     private JwtService jwtService;
 
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockitoBean
+    private SimpleUserDetailsService simpleUserDetailsService;
+
     @Test
     @WithMockUser
     void testGetPlayerInfoByName_Success() throws Exception {
@@ -36,7 +44,8 @@ class PlayerControllerTest {
         mockPlayer.setName(playerName);
         mockPlayer.setCurrentTeam("Inter Miami");
 
-        when(playerService.getPlayerInfoByName(playerName)).thenReturn(mockPlayer);
+        // Mock retorna Object
+        when(playerService.getPlayerInfoByName(playerName)).thenReturn((Object) mockPlayer);
 
         // Act & Assert
         mockMvc.perform(get("/api/player").param("playerName", playerName))

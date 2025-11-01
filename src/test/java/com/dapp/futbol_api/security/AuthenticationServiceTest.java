@@ -1,25 +1,27 @@
 package com.dapp.futbol_api.security;
 
-import com.dapp.futbol_api.model.Role;
-import com.dapp.futbol_api.model.User;
-import com.dapp.futbol_api.repositories.UserRepository;
-import com.dapp.futbol_api.utils.UserValidator;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import static org.mockito.ArgumentMatchers.any;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import com.dapp.futbol_api.model.User;
+import com.dapp.futbol_api.repositories.UserRepository;
+import com.dapp.futbol_api.service.ScraperUserService;
+import com.dapp.futbol_api.utils.UserValidator;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
@@ -34,6 +36,8 @@ class AuthenticationServiceTest {
     private AuthenticationManager authenticationManager;
     @Mock
     private UserValidator userValidator;
+    @Mock
+    private ScraperUserService scraperUserService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -42,30 +46,23 @@ class AuthenticationServiceTest {
     void testRegisterShouldSucceedWithValidRequest() {
         // Arrange
         RegisterRequest request = new RegisterRequest("test@example.com", "password123");
-        String encodedPassword = "encodedPassword";
+        String expectedMessage = "User registered in scraper service";
 
         // Mock the dependencies' behavior
         doNothing().when(userValidator).validateRegistrationRequest(request);
-        when(passwordEncoder.encode(request.getPassword())).thenReturn(encodedPassword);
+        when(scraperUserService.registerUser(request)).thenReturn(expectedMessage);
 
         // Act
         String result = authenticationService.register(request);
 
-        // Assert
-        assertEquals("User registered successfully", result);
+        // Assert - Usa el mensaje real que retorna ScraperUserService
+        assertEquals(expectedMessage, result);
 
-        // Verify that the validator was called
+        // Verify interactions
         verify(userValidator).validateRegistrationRequest(request);
+        verify(scraperUserService).registerUser(request);
 
-        // Capture the user object passed to the repository
-        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(userCaptor.capture());
-        User savedUser = userCaptor.getValue();
-
-        // Assert properties of the saved user
-        assertEquals(request.getEmail(), savedUser.getEmail());
-        assertEquals(encodedPassword, savedUser.getPassword());
-        assertEquals(Role.USER, savedUser.getRole());
+        // No verifiques userRepository o passwordEncoder ya que ScraperUserService se encarga
     }
 
     @Test
@@ -85,13 +82,17 @@ class AuthenticationServiceTest {
     void testAuthenticateShouldReturnTokenWithValidCredentials() {
         // Arrange
         AuthenticationRequest request = new AuthenticationRequest("test@example.com", "password123");
-        User user = User.builder().email(request.getEmail()).password("encodedPassword").role(Role.USER).build();
         String expectedToken = "dummy-jwt-token";
 
         // Mock dependencies
         doNothing().when(userValidator).validateAuthenticationRequest(request);
-        when(userRepository.findByEmail(request.getEmail())).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(user)).thenReturn(expectedToken);
+
+        // MOCK CORRECTO: scraperUserService.validateUser debe retornar true
+        when(scraperUserService.validateUser(request.getEmail(), request.getPassword()))
+                .thenReturn(true);
+
+        // Mock JWT service - usa any(UserDetails.class) ya que creas un UserDetails temporal
+        when(jwtService.generateToken(any(UserDetails.class))).thenReturn(expectedToken);
 
         // Act
         AuthenticationResponse response = authenticationService.authenticate(request);
@@ -100,23 +101,34 @@ class AuthenticationServiceTest {
         assertNotNull(response);
         assertEquals(expectedToken, response.getToken());
 
-        // Verify interactions
-        verify(authenticationManager).authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-        verify(jwtService).generateToken(user);
+        // Verify interactions CORRECTAS
+        verify(userValidator).validateAuthenticationRequest(request);
+        verify(scraperUserService).validateUser(request.getEmail(), request.getPassword());
+        verify(jwtService).generateToken(any(UserDetails.class));
+
+        // NO debería llamar a authenticationManager
+        verify(authenticationManager, never()).authenticate(any());
     }
 
     @Test
     void testAuthenticateShouldThrowExceptionWithInvalidCredentials() {
         // Arrange
         AuthenticationRequest request = new AuthenticationRequest("test@example.com", "wrong-password");
+
+        // Mock dependencies
         doNothing().when(userValidator).validateAuthenticationRequest(request);
-        when(authenticationManager.authenticate(any())).thenThrow(new BadCredentialsException("Invalid credentials"));
+
+        // MOCK: scraperUserService.validateUser retorna false
+        when(scraperUserService.validateUser(request.getEmail(), request.getPassword()))
+                .thenReturn(false);
 
         // Act & Assert
-        assertThrows(BadCredentialsException.class, () -> authenticationService.authenticate(request));
+        assertThrows(IllegalArgumentException.class, () -> authenticationService.authenticate(request));
 
-        // Verify that a token is never generated
-        verify(jwtService, never()).generateToken(any(User.class));
+        // Verify interactions
+        verify(userValidator).validateAuthenticationRequest(request);
+        verify(scraperUserService).validateUser(request.getEmail(), request.getPassword());
+        verify(jwtService, never()).generateToken(any(UserDetails.class));
     }
 
 }

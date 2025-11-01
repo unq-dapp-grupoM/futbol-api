@@ -14,11 +14,14 @@ public class SimpleUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        // Crear UserDetails con autoridad USER para que coincida con tu configuración
+        if (email == null || email.trim().isEmpty()) {
+            throw new UsernameNotFoundException("Email cannot be null or empty");
+        }
+
         return User.builder()
                 .username(email)
-                .password("") // No se usa para JWT
-                .authorities(List.of(new SimpleGrantedAuthority("USER"))) // AGREGAR ESTA AUTORIDAD
+                .password("")
+                .authorities(List.of(new SimpleGrantedAuthority("USER")))
                 .accountExpired(false)
                 .accountLocked(false)
                 .credentialsExpired(false)
