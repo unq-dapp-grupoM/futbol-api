@@ -1,7 +1,14 @@
 package com.dapp.futbol_api.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,17 +16,20 @@ import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.client.MockRestServiceServer;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
-import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestClientTest(AnalysisService.class)
 class AnalysisServiceTest {
@@ -44,7 +54,11 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_Success() throws JsonProcessingException {
         // Arrange
         String playerName = "Lionel Messi";
-        String url = baseUrl + "/api/analysis/Lionel%20Messi/performanceMetrics";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Lionel%20Messi/performanceMetrics?userEmail=" + userEmail;
         Map<String, Object> mockMetrics = Collections.singletonMap("goals", 900);
 
         mockServer.expect(requestTo(url))
@@ -52,7 +66,7 @@ class AnalysisServiceTest {
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockMetrics), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPlayerPerformanceMetrics(playerName);
+        Object result = analysisService.getPlayerPerformanceMetrics(playerName, authentication);
 
         // Assert
         assertNotNull(result);
@@ -65,13 +79,17 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_PlayerNotFound() {
         // Arrange
         String playerName = "Unknown Player";
-        String url = baseUrl + "/api/analysis/Unknown%20Player/performanceMetrics";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Unknown%20Player/performanceMetrics?userEmail=" + userEmail;
 
         mockServer.expect(requestTo(url))
                 .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> analysisService.getPlayerPerformanceMetrics(playerName));
+        assertThrows(IllegalArgumentException.class, () -> analysisService.getPlayerPerformanceMetrics(playerName, authentication));
         mockServer.verify();
     }
 
@@ -79,7 +97,11 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_HandlesListResponse() throws JsonProcessingException {
         // Arrange
         String playerName = "List Player";
-        String url = baseUrl + "/api/analysis/List%20Player/performanceMetrics";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/List%20Player/performanceMetrics?userEmail=" + userEmail;
         Map<String, Object> mockMetric = Collections.singletonMap("assists", 10);
         List<Map<String, Object>> mockResponse = Collections.singletonList(mockMetric);
 
@@ -87,11 +109,11 @@ class AnalysisServiceTest {
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockResponse), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPlayerPerformanceMetrics(playerName);
+        Object result = analysisService.getPlayerPerformanceMetrics(playerName, authentication);
 
         // Assert
         assertNotNull(result);
-        assertEquals(mockMetric, result);
+        assertEquals(mockResponse, result);
         mockServer.verify();
     }
 
@@ -99,13 +121,17 @@ class AnalysisServiceTest {
     void testGetPlayerMetrics_ClientError() {
         // Arrange
         String playerName = "Error Player";
-        String url = baseUrl + "/api/analysis/Error%20Player/performanceMetrics";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Error%20Player/performanceMetrics?userEmail=" + userEmail;
 
         mockServer.expect(requestTo(url))
                 .andRespond(withBadRequest().body("Invalid request"));
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> analysisService.getPlayerPerformanceMetrics(playerName));
+        assertThrows(RuntimeException.class, () -> analysisService.getPlayerPerformanceMetrics(playerName, authentication));
         mockServer.verify();
     }
 
@@ -114,14 +140,18 @@ class AnalysisServiceTest {
         // Arrange
         String playerName = "Cristiano Ronaldo";
         String opponent = "FC Barcelona";
-        String url = baseUrl + "/api/analysis/Cristiano%20Ronaldo/prediction?opponent=FC%20Barcelona&isHome=true&position=FW";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Cristiano%20Ronaldo/prediction?opponent=FC%20Barcelona&isHome=true&position=FW&userEmail=" + userEmail;
         Map<String, Object> mockPrediction = Collections.singletonMap("expectedGoals", 1.2);
 
         mockServer.expect(requestTo(url))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockPrediction), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPerformancePrediction(playerName, opponent, true, "FW");
+        Object result = analysisService.getPerformancePrediction(playerName, opponent, true, "FW", authentication);
 
         // Assert
         assertNotNull(result);
@@ -132,13 +162,17 @@ class AnalysisServiceTest {
     @Test
     void testGetPerformancePrediction_ServiceError() {
         // Arrange
-        String url = baseUrl + "/api/analysis/Error%20Player/prediction?opponent=Any&isHome=false&position=GK";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Error%20Player/prediction?opponent=Any&isHome=false&position=GK&userEmail=" + userEmail;
 
         mockServer.expect(requestTo(url))
                 .andRespond(withServerError());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> analysisService.getPerformancePrediction("Error Player", "Any", false, "GK"));
+        assertThrows(RuntimeException.class, () -> analysisService.getPerformancePrediction("Error Player", "Any", false, "GK", authentication));
         mockServer.verify();
     }
 
@@ -147,7 +181,11 @@ class AnalysisServiceTest {
         // Arrange
         String playerName = "List Player";
         String opponent = "Some Team";
-        String url = baseUrl + "/api/analysis/List%20Player/prediction?opponent=Some%20Team&isHome=true&position=FW";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/List%20Player/prediction?opponent=Some%20Team&isHome=true&position=FW&userEmail=" + userEmail;
         Map<String, Object> mockPrediction = Collections.singletonMap("expectedGoals", 0.5);
         List<Map<String, Object>> mockResponse = Collections.singletonList(mockPrediction);
 
@@ -155,11 +193,11 @@ class AnalysisServiceTest {
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockResponse), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPerformancePrediction(playerName, opponent, true, "FW");
+        Object result = analysisService.getPerformancePrediction(playerName, opponent, true, "FW", authentication);
 
         // Assert
         assertNotNull(result);
-        assertEquals(mockPrediction, result);
+        assertEquals(mockResponse, result);
         mockServer.verify();
     }
 
@@ -168,14 +206,18 @@ class AnalysisServiceTest {
         // Arrange
         String playerName = "Empty List Player";
         String opponent = "Some Team";
-        String url = baseUrl + "/api/analysis/Empty%20List%20Player/prediction?opponent=Some%20Team&isHome=true&position=FW";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Empty%20List%20Player/prediction?opponent=Some%20Team&isHome=true&position=FW&userEmail=" + userEmail;
         List<Map<String, Object>> mockResponse = Collections.emptyList();
 
         mockServer.expect(requestTo(url))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockResponse), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getPerformancePrediction(playerName, opponent, true, "FW");
+        Object result = analysisService.getPerformancePrediction(playerName, opponent, true, "FW", authentication);
 
         // Assert
         assertNull(result);
@@ -186,12 +228,16 @@ class AnalysisServiceTest {
     void testGetPerformancePrediction_PlayerNotFound() {
         // Arrange
         String playerName = "Unknown Player";
-        String url = baseUrl + "/api/analysis/Unknown%20Player/prediction?opponent=Any&isHome=false&position=GK";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Unknown%20Player/prediction?opponent=Any&isHome=false&position=GK&userEmail=" + userEmail;
 
         mockServer.expect(requestTo(url)).andRespond(withStatus(HttpStatus.NOT_FOUND));
 
         // Act & Assert
-        assertThrows(IllegalArgumentException.class, () -> analysisService.getPerformancePrediction(playerName, "Any", false, "GK"));
+        assertThrows(IllegalArgumentException.class, () -> analysisService.getPerformancePrediction(playerName, "Any", false, "GK", authentication));
         mockServer.verify();
     }
 
@@ -249,14 +295,18 @@ class AnalysisServiceTest {
     void testGetComparativeAnalysis_Success() throws JsonProcessingException {
         // Arrange
         String playerName = "Kylian Mbappé";
-        String url = baseUrl + "/api/analysis/Kylian%20Mbapp%C3%A9/comparison";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Kylian%20Mbapp%C3%A9/comparison?userEmail=" + userEmail;
         Map<String, String> mockAnalysis = Collections.singletonMap("trend", "improving");
 
         mockServer.expect(requestTo(url))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockAnalysis), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getComparativeAnalysis(playerName);
+        Object result = analysisService.getComparativeAnalysis(playerName, authentication);
 
         // Assert
         assertNotNull(result);
@@ -268,14 +318,18 @@ class AnalysisServiceTest {
     void testGetComparativeAnalysis_HandlesEmptyListResponse() throws JsonProcessingException {
         // Arrange
         String playerName = "Empty List Player";
-        String url = baseUrl + "/api/analysis/Empty%20List%20Player/comparison";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Empty%20List%20Player/comparison?userEmail=" + userEmail;
         List<Map<String, Object>> mockResponse = Collections.emptyList();
 
         mockServer.expect(requestTo(url))
                 .andRespond(withSuccess(objectMapper.writeValueAsString(mockResponse), MediaType.APPLICATION_JSON));
 
         // Act
-        Object result = analysisService.getComparativeAnalysis(playerName);
+        Object result = analysisService.getComparativeAnalysis(playerName, authentication);
 
         // Assert
         assertNull(result);
@@ -286,13 +340,83 @@ class AnalysisServiceTest {
     void testGetComparativeAnalysis_ServerError() {
         // Arrange
         String playerName = "Error Player";
-        String url = baseUrl + "/api/analysis/Error%20Player/comparison";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/Error%20Player/comparison?userEmail=" + userEmail;
 
         mockServer.expect(requestTo(url))
                 .andRespond(withServerError());
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> analysisService.getComparativeAnalysis(playerName));
+        assertThrows(RuntimeException.class, () -> analysisService.getComparativeAnalysis(playerName, authentication));
+        mockServer.verify();
+    }
+
+    @Test
+    void testGetPlayerHistory_Success() throws JsonProcessingException {
+        // Arrange
+        String playerName = "Lionel Messi";
+        String date = "02-11-2025";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/history/Lionel%20Messi?date=02-11-2025&userEmail=" + userEmail;
+
+        List<Map<String, Object>> mockHistory = List.of(
+                Map.of("id", 1, "queryType", "PREDICTION"),
+                Map.of("id", 2, "queryType", "PERFORMANCE")
+        );
+
+        mockServer.expect(requestTo(url))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(mockHistory), MediaType.APPLICATION_JSON));
+
+        // Act
+        Object result = analysisService.getPlayerHistory(playerName, date, authentication);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(mockHistory, result);
+        mockServer.verify();
+    }
+
+    @Test
+    void testGetPlayerHistory_PlayerNotFound() {
+        // Arrange
+        String playerName = "Unknown Player";
+        String date = "02-11-2025";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+
+        String url = baseUrl + "/api/analysis/history/Unknown%20Player?date=02-11-2025&userEmail=" + userEmail;
+
+        mockServer.expect(requestTo(url))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> analysisService.getPlayerHistory(playerName, date, authentication));
+        mockServer.verify();
+    }
+
+    @Test
+    void testGetPlayerHistory_EmptyListResponse() throws JsonProcessingException {
+        // Arrange
+        String playerName = "NoHistory Player";
+        String date = "02-11-2025";
+        String userEmail = "test@example.com";
+        UserDetails userDetails = new User(userEmail, "password", Collections.emptyList());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null);
+        String url = baseUrl + "/api/analysis/history/NoHistory%20Player?date=02-11-2025&userEmail=" + userEmail;
+        mockServer.expect(requestTo(url))
+                .andRespond(withSuccess(objectMapper.writeValueAsString(Collections.emptyList()), MediaType.APPLICATION_JSON));
+        // Act
+        Object result = analysisService.getPlayerHistory(playerName, date, authentication);
+        // Assert
+        assertNull(result);
         mockServer.verify();
     }
 
