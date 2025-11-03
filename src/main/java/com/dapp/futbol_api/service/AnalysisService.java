@@ -1,21 +1,24 @@
 package com.dapp.futbol_api.service;
 
-import com.dapp.futbol_api.exception.AnalysisServiceException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.stereotype.Service;
-import org.springframework.http.HttpMethod;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.util.UriComponentsBuilder;
-import org.springframework.web.util.UriUtils;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
+
+import com.dapp.futbol_api.exception.AnalysisServiceException;
 
 @Service
 public class AnalysisService extends AbstractWebService {
@@ -32,12 +35,16 @@ public class AnalysisService extends AbstractWebService {
     /**
      * Gets performance metrics for a player.
      */
-    public Object getPlayerPerformanceMetrics(String playerName) {
+    public Object getPlayerPerformanceMetrics(String playerName, Authentication authentication) {
         String decodedPlayerName = decodeUrlParameter(playerName);
-        log.info("Requesting performance metrics for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String userEmail = userDetails.getUsername();
+        log.info("Requesting performance metrics for player '{}'  by user (email: {}) from {}",
+                decodedPlayerName, userEmail, scraperServiceUrl);
 
         String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                 .path("/api/analysis/{player}/performanceMetrics")
+                .queryParam("userEmail", userEmail)
                 .buildAndExpand(encodePathSegment(decodedPlayerName))
                 .toUriString();
 
@@ -48,19 +55,22 @@ public class AnalysisService extends AbstractWebService {
     /**
      * Gets performance prediction for the next match.
      */
-    public Object getPerformancePrediction(String playerName, String opponent, boolean isHome, String position) {
+    public Object getPerformancePrediction(String playerName, String opponent, boolean isHome, String position, Authentication authentication) {
         String decodedPlayerName = decodeUrlParameter(playerName);
         String decodedOpponent = decodeUrlParameter(opponent);
         String decodedPosition = decodeUrlParameter(position);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String userEmail = userDetails.getUsername();
 
-        log.info("Requesting performance prediction for player '{}' vs '{}' from {}",
-                decodedPlayerName, decodedOpponent, scraperServiceUrl);
+        log.info("Requesting performance prediction for player '{}' vs '{}' by user (email: {}) from {}",
+                decodedPlayerName, decodedOpponent, userEmail, scraperServiceUrl);
 
         String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                 .path("/api/analysis/{player}/prediction")
                 .queryParam("opponent", encodeQueryParam(decodedOpponent))
                 .queryParam("isHome", isHome)
                 .queryParam("position", encodeQueryParam(decodedPosition))
+                .queryParam("userEmail", userEmail)
                 .buildAndExpand(encodePathSegment(decodedPlayerName))
                 .toUriString();
 
@@ -94,12 +104,16 @@ public class AnalysisService extends AbstractWebService {
     /**
      * Gets a comparative analysis of the player.
      */
-    public Object getComparativeAnalysis(String playerName) {
+    public Object getComparativeAnalysis(String playerName, Authentication authentication) {
         String decodedPlayerName = decodeUrlParameter(playerName);
-        log.info("Requesting comparative analysis for player '{}' from {}", decodedPlayerName, scraperServiceUrl);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String userEmail = userDetails.getUsername();
+        log.info("Requesting comparative analysis for player '{}' by user (email: {}) from {}",
+                decodedPlayerName, userEmail, scraperServiceUrl);
 
         String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
                 .path("/api/analysis/{player}/comparison")
+                .queryParam("userEmail", userEmail)
                 .buildAndExpand(encodePathSegment(decodedPlayerName))
                 .toUriString();
 
@@ -107,6 +121,27 @@ public class AnalysisService extends AbstractWebService {
                 "Error fetching comparative analysis.");
     }
 
+    /**
+     * Gets the query history for a player on a specific date.
+     */
+    public Object getPlayerHistory(String playerName, String date, Authentication authentication) {
+        String decodedPlayerName = decodeUrlParameter(playerName);
+        String decodedDate = decodeUrlParameter(date);
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String userEmail = userDetails.getUsername();
+
+        log.info("Requesting history for player '{}' on date '{}' for user (email: {}) from {}",
+                decodedPlayerName, decodedDate, userEmail, scraperServiceUrl);
+
+        String url = UriComponentsBuilder.fromUriString(scraperServiceUrl)
+                .path("/api/analysis/history/{player}")
+                .queryParam("date", encodeQueryParam(decodedDate))
+                .queryParam("userEmail", userEmail)
+                .buildAndExpand(encodePathSegment(decodedPlayerName))
+                .toUriString();
+
+        return performApiCall(url, HttpMethod.GET, decodedPlayerName, "history", "Error fetching player history.");
+    }
     /**
      * Performs the actual API call and handles common responses and exceptions.
      */
@@ -125,7 +160,11 @@ public class AnalysisService extends AbstractWebService {
 
             if (response instanceof List) {
                 List<?> list = (List<?>) response;
-                return list.isEmpty() ? null : list.get(0);
+                if (list.isEmpty()) {
+                    return null;
+                }
+                // Return the full list for endpoints that expect multiple items (like history)
+                return list;
             }
             return response;
 
