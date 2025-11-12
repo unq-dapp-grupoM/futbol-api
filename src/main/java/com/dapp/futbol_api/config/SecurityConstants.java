@@ -17,6 +17,7 @@ public final class SecurityConstants {
             "/swagger-ui.html",
             // Path for Render's Health Check
             "/actuator/**",
+            "/monitoring/**",
             "/h2-console/**"
     };
 
