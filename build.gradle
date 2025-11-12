@@ -35,6 +35,12 @@ dependencies {
 	// Swagger / OpenAPI 3 & Web Scraping
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0'
 
+    // Spring Boot Actuator
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    // Prometheus
+    implementation("io.micrometer:micrometer-registry-prometheus")
+
 	// Herramientas y Base de Datos
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -78,4 +84,8 @@ jacocoTestReport {
 		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
     }
 	dependsOn test
+}
+
+springBoot {
+    buildInfo()
 }
