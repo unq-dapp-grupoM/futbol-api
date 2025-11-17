@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'football-api-render'
+    metrics_path: '/monitoring/prometheus'
+    static_configs:
+      - targets: ['https://futbol-api-main.onrender.com']
+    scheme: https
+    scrape_interval: 10s
+    honor_labels: true
