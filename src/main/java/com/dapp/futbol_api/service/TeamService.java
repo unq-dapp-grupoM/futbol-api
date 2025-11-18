@@ -35,7 +35,7 @@ public class TeamService extends AbstractWebService {
                 throw new IllegalArgumentException("Team with name '" + teamName + "' not found.");
             }
 
-            return teamsList.get(0);
+            return teamsList.getFirst();
         } catch (HttpClientErrorException.NotFound e) {
             throw new IllegalArgumentException("Team with name '" + teamName + "' not found.", e);
         } catch (Exception e) {
@@ -59,6 +59,40 @@ public class TeamService extends AbstractWebService {
             throw new TeamServiceException("Error fetching future matches.", e);
         }
     }
+
+    public Object compareTeams(String team1, String team2) {
+        log.info("Comparing teams '{}' vs '{}' from scraper service", team1, team2);
+
+        try {
+            String url = buildTeamComparisonUrl(team1, team2);
+            log.debug("Final URL to scraper-service for team comparison: {}", url);
+
+            // Realizar la llamada al servicio externo
+            Object comparison = restTemplate.getForObject(url, Object.class);
+
+            if (comparison == null) {
+                throw new IllegalArgumentException("Comparison data not found for teams: " + team1 + " vs " + team2);
+            }
+
+            return comparison;
+
+        } catch (HttpClientErrorException.NotFound e) {
+            throw new IllegalArgumentException("One or both teams not found: '" + team1 + "' or '" + team2 + "'", e);
+        } catch (Exception e) {
+            throw new TeamServiceException("Error comparing teams.", e);
+        }
+    }
+
+    private String buildTeamComparisonUrl(String team1, String team2) {
+        StringBuilder urlBuilder = new StringBuilder();
+        urlBuilder.append("/api/scrape/teams/compare?team1=");
+        urlBuilder.append(encodeValue(team1));
+        urlBuilder.append("&team2=");
+        urlBuilder.append(encodeValue(team2));
+
+        return urlBuilder.toString();
+    }
+
 
     /**
      * Builds the URL manually to avoid double encoding.
