@@ -44,4 +44,17 @@ public class TeamController {
     private String sanitize(String input) {
         return input.replaceAll(NEW_LINE_REGEX, "_");
     }
+
+    @Operation(summary = "Compare two teams", description = "Compare performance and statistics between two teams")
+    @GetMapping("/teams/compare")
+    public ResponseEntity<Object> compareTeams(
+            @Parameter(description = "First team name", example = "Real Madrid") @RequestParam("team1") String team1,
+            @Parameter(description = "Second team name", example = "Barcelona") @RequestParam("team2") String team2) {
+
+        final String sanitizedTeam1 = sanitize(team1);
+        final String sanitizedTeam2 = sanitize(team2);
+
+        Object comparison = teamService.compareTeams(sanitizedTeam1, sanitizedTeam2);
+        return ResponseEntity.ok(comparison);
+    }
 }
