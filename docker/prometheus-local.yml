@@ -10,3 +10,9 @@ scrape_configs:
         # - targets: ['172.17.0.1:8080']        # Para Linux
     scrape_interval: 10s
     honor_labels: true
+  - job_name: 'scraper-service-local'
+    metrics_path: '/monitoring/prometheus'
+    static_configs:
+      - targets: [ 'host.docker.internal:8081' ]  # scraper-service
+    scrape_interval: 15s
+    honor_labels: true
